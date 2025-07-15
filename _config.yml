@@ -1,6 +1,9 @@
+title: NoahdaBoat's GitHub Pages
+description: A personal website for NoahdaBoat
+theme: minima
 lsi: false
 safe: true
-source: [index.html]
+source: [index.md]
 incremental: false
 highlighter: rouge
 gist:
