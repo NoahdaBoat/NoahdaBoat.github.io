@@ -3,7 +3,7 @@
   themeToggle.className = 'theme-toggle';
   themeToggle.setAttribute('aria-label', 'Toggle dark mode');
   
-  const currentTheme = localStorage.getItem('theme') || 'light';
+  const currentTheme = localStorage.getItem('theme') || 'dark';
   document.documentElement.setAttribute('data-theme', currentTheme);
   
   themeToggle.addEventListener('click', function() {

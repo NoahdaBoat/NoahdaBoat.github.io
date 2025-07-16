@@ -80,3 +80,19 @@ blockquote {
 [data-theme="dark"] .theme-toggle::before {
   content: "☀️";
 }
+
+.signature-light {
+  display: block !important;
+}
+
+.signature-dark {
+  display: none !important;
+}
+
+[data-theme="dark"] .signature-light {
+  display: none !important;
+}
+
+[data-theme="dark"] .signature-dark {
+  display: block !important;
+}
