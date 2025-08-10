@@ -1,0 +1,3 @@
+@echo off
+set __COMPAT_LAYER=Win98
+D:\DREAM\WIN\SETUP.EXE
