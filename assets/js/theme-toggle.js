@@ -15,6 +15,8 @@
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
       });
+    } else {
+      console.warn('Theme toggle button not found in DOM');
     }
   }
   
