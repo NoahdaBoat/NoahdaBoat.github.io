@@ -6,151 +6,223 @@ layout: home
 ---
 
 <section class="threejs-hero" aria-label="Animated 3D text background">
-  <canvas id="threejs-text" data-text="{{ site.title | escape }}"></canvas>
-  <div class="threejs-hero__overlay">
-    <h1 class="threejs-hero__title">Welcome aboard!</h1>
-    <p class="threejs-hero__subtitle">
-      Watch the site title sculpted in luminous 3D type swirl through the hero section in real-time.
-    </p>
-  </div>
+  <div id="threejs-container"></div>
 </section>
 
-<script src="https://unpkg.com/three@0.161.0/build/three.min.js" integrity="sha384-5xkqVSne+oRDkB+ZPvr/INULbyQDx4et6ct4k6JgkN2mjYGPtSwDPYK9UHpgJ3TO" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/three@0.161.0/examples/js/loaders/FontLoader.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/three@0.161.0/examples/js/geometries/TextGeometry.js" crossorigin="anonymous"></script>
-<script>
-  (function () {
-    if (
-      typeof THREE === "undefined" ||
-      typeof THREE.FontLoader === "undefined" ||
-      typeof THREE.TextGeometry === "undefined"
-    ) {
-      return;
-    }
-
-    const canvas = document.getElementById("threejs-text");
-    if (!canvas) {
-      return;
-    }
-
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      antialias: true,
-      alpha: true,
-    });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    const initialWidth = canvas.clientWidth || 1;
-    const initialHeight = canvas.clientHeight || 1;
-    renderer.setSize(initialWidth, initialHeight, false);
-
-    const scene = new THREE.Scene();
-    scene.background = null;
-
-    const camera = new THREE.PerspectiveCamera(40, 2, 0.1, 200);
-    camera.position.set(0, 0, 26);
-    camera.aspect = initialWidth / initialHeight;
-    camera.updateProjectionMatrix();
-
-    const textGroup = new THREE.Group();
-    scene.add(textGroup);
-
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1);
-    keyLight.position.set(6, 8, 10);
-    scene.add(keyLight);
-
-    const rimLight = new THREE.DirectionalLight(0x60a5fa, 0.8);
-    rimLight.position.set(-7, -4, 5);
-    scene.add(rimLight);
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-
-    const loader = new THREE.FontLoader();
-    const textString = canvas.dataset.text || "Creative Coding";
-    const fontUrl = "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json";
-
-    loader.load(
-      fontUrl,
-      function (font) {
-        const textGeometry = new THREE.TextGeometry(textString, {
-          font,
-          size: 3.75,
-          height: 1.3,
-          curveSegments: 12,
-          bevelEnabled: true,
-          bevelThickness: 0.35,
-          bevelSize: 0.3,
-          bevelOffset: 0,
-          bevelSegments: 5,
-        });
-        textGeometry.center();
-
-        const textMaterial = new THREE.MeshStandardMaterial({
-          color: 0x7dd3fc,
-          emissive: 0x0f172a,
-          roughness: 0.38,
-          metalness: 0.55,
-        });
-
-        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-        textGroup.add(textMesh);
-
-        const edgeMaterial = new THREE.LineBasicMaterial({
-          color: 0x38bdf8,
-          transparent: true,
-          opacity: 0.35,
-        });
-        const textEdges = new THREE.LineSegments(
-          new THREE.EdgesGeometry(textGeometry),
-          edgeMaterial
-        );
-        textGroup.add(textEdges);
-      },
-      undefined,
-      function () {
-        console.warn("Three.js font failed to load: " + fontUrl);
-      }
-    );
-
-    function resizeRendererToDisplaySize() {
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
-      const pixelRatio = Math.min(window.devicePixelRatio, 2);
-      const needResize =
-        canvas.width !== Math.floor(width * pixelRatio) ||
-        canvas.height !== Math.floor(height * pixelRatio);
-
-      if (needResize) {
-        renderer.setPixelRatio(pixelRatio);
-        renderer.setSize(width, height, false);
-      }
-
-      return needResize;
-    }
-
-    function handleResize() {
-      if (resizeRendererToDisplaySize()) {
-        const { clientWidth, clientHeight } = canvas;
-        camera.aspect = clientWidth / clientHeight;
-        camera.updateProjectionMatrix();
-      }
-    }
-
-    function render(time) {
-      time *= 0.001;
-      requestAnimationFrame(render);
-
-      handleResize();
-
-      textGroup.rotation.y = time * 0.45;
-      textGroup.rotation.x = Math.sin(time * 0.45) * 0.25;
-      textGroup.rotation.z = Math.sin(time * 0.3) * 0.1;
-
-      renderer.render(scene, camera);
-    }
-
-    handleResize();
-    render(0);
-
-    window.addEventListener("resize", handleResize);
-  })();
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+  }
+}
 </script>
+
+<script type="module">
+import * as THREE from 'three';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js';
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+
+let container;
+let camera, cameraTarget, scene, renderer;
+let group, textMesh1, textMesh2;
+let targetRotation = 0;
+let targetRotationOnPointerDown = 0;
+let pointerX = 0;
+let pointerXOnPointerDown = 0;
+let isUserInteracting = false;
+let autoRotateTimeout = null;
+const autoRotateSpeed = 0.01;
+const autoRotateDelay = 2000; // 2 seconds
+
+const text = "{{ site.title | replace: "'", "\\'" }}";
+const bevelEnabled = true;
+const depth = 20;
+const size = 60;
+const hover = 30;
+const curveSegments = 4;
+const bevelThickness = 2;
+const bevelSize = 1.5;
+const mirror = true;
+
+init();
+animate();
+
+function init() {
+  container = document.getElementById('threejs-container');
+  
+  // CAMERA
+  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000);
+  camera.position.set(0, 150, 700);
+  cameraTarget = new THREE.Vector3(0, 100, 0);
+  
+  // SCENE
+  scene = new THREE.Scene();
+  scene.background = null; // transparent background
+  scene.fog = new THREE.Fog(0x000000, 250, 1400);
+  
+  // LIGHTS
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.4);
+  dirLight.position.set(0, 0, 1).normalize();
+  scene.add(dirLight);
+  
+  const pointLight = new THREE.PointLight(0xffffff, 4.5, 0, 0);
+  pointLight.color.setHSL(Math.random(), 1, 0.5);
+  pointLight.position.set(0, 100, 90);
+  scene.add(pointLight);
+  
+  // MATERIALS
+  const materials = [
+    new THREE.MeshPhongMaterial({ color: 0x7dd3fc, flatShading: true }), // front
+    new THREE.MeshPhongMaterial({ color: 0x3b82f6 }) // side
+  ];
+  
+  group = new THREE.Group();
+  group.position.y = 100;
+  scene.add(group);
+  
+  // Load font and create text
+  const loader = new FontLoader();
+  loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function(font) {
+    const textGeo = new TextGeometry(text, {
+      font: font,
+      size: size,
+      depth: depth,
+      curveSegments: curveSegments,
+      bevelThickness: bevelThickness,
+      bevelSize: bevelSize,
+      bevelEnabled: bevelEnabled
+    });
+    
+    textGeo.computeBoundingBox();
+    const centerOffset = -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
+    
+    textMesh1 = new THREE.Mesh(textGeo, materials);
+    textMesh1.position.x = centerOffset;
+    textMesh1.position.y = hover;
+    textMesh1.position.z = 0;
+    textMesh1.rotation.x = 0;
+    textMesh1.rotation.y = Math.PI * 2;
+    group.add(textMesh1);
+    
+    if (mirror) {
+      textMesh2 = new THREE.Mesh(textGeo, materials);
+      textMesh2.position.x = centerOffset;
+      textMesh2.position.y = -hover;
+      textMesh2.position.z = depth;
+      textMesh2.rotation.x = Math.PI;
+      textMesh2.rotation.y = Math.PI * 2;
+      group.add(textMesh2);
+    }
+  }, undefined, function(error) {
+    console.error('Error loading font:', error);
+  });
+  
+  // Add a plane
+  const plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(10000, 10000),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.5, transparent: true })
+  );
+  plane.position.y = 100;
+  plane.rotation.x = -Math.PI / 2;
+  scene.add(plane);
+  
+  // RENDERER
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  container.appendChild(renderer.domElement);
+  
+  // EVENTS
+  container.style.touchAction = 'none';
+  container.addEventListener('pointerdown', onPointerDown);
+  
+  window.addEventListener('resize', onWindowResize);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function onPointerDown(event) {
+  if (event.isPrimary === false) return;
+  
+  isUserInteracting = true;
+  if (autoRotateTimeout) {
+    clearTimeout(autoRotateTimeout);
+    autoRotateTimeout = null;
+  }
+  
+  pointerXOnPointerDown = event.clientX - window.innerWidth / 2;
+  targetRotationOnPointerDown = targetRotation;
+  
+  document.addEventListener('pointermove', onPointerMove);
+  document.addEventListener('pointerup', onPointerUp);
+}
+
+function onPointerMove(event) {
+  if (event.isPrimary === false) return;
+  
+  pointerX = event.clientX - window.innerWidth / 2;
+  targetRotation = targetRotationOnPointerDown + (pointerX - pointerXOnPointerDown) * 0.02;
+}
+
+function onPointerUp(event) {
+  if (event.isPrimary === false) return;
+  
+  document.removeEventListener('pointermove', onPointerMove);
+  document.removeEventListener('pointerup', onPointerUp);
+  
+  // Resume auto-rotation after delay
+  autoRotateTimeout = setTimeout(() => {
+    isUserInteracting = false;
+  }, autoRotateDelay);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  
+  // Auto-rotate if not interacting
+  if (!isUserInteracting) {
+    targetRotation += autoRotateSpeed;
+  }
+  
+  group.rotation.y += (targetRotation - group.rotation.y) * 0.05;
+  
+  camera.lookAt(cameraTarget);
+  
+  renderer.clear();
+  renderer.render(scene, camera);
+}
+</script>
+
+<style>
+.threejs-hero {
+  position: relative;
+  width: 100vw;
+  height: 70vh;
+  min-height: 400px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+}
+
+#threejs-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .threejs-hero {
+    height: 50vh;
+    min-height: 300px;
+  }
+}
+</style>
