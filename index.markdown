@@ -5,24 +5,30 @@
 layout: home
 ---
 
-<section class="threejs-hero" aria-label="Animated cube background">
-  <canvas id="threejs-cube"></canvas>
+<section class="threejs-hero" aria-label="Animated 3D text background">
+  <canvas id="threejs-text" data-text="{{ site.title | escape }}"></canvas>
   <div class="threejs-hero__overlay">
     <h1 class="threejs-hero__title">Welcome aboard!</h1>
     <p class="threejs-hero__subtitle">
-      Enjoy this interactive Three.js cube spinning in real-time right on the homepage.
+      Watch the site title sculpted in luminous 3D type swirl through the hero section in real-time.
     </p>
   </div>
 </section>
 
 <script src="https://unpkg.com/three@0.161.0/build/three.min.js" integrity="sha384-5xkqVSne+oRDkB+ZPvr/INULbyQDx4et6ct4k6JgkN2mjYGPtSwDPYK9UHpgJ3TO" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/three@0.161.0/examples/js/loaders/FontLoader.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/three@0.161.0/examples/js/geometries/TextGeometry.js" crossorigin="anonymous"></script>
 <script>
   (function () {
-    if (typeof THREE === "undefined") {
+    if (
+      typeof THREE === "undefined" ||
+      typeof THREE.FontLoader === "undefined" ||
+      typeof THREE.TextGeometry === "undefined"
+    ) {
       return;
     }
 
-    const canvas = document.getElementById("threejs-cube");
+    const canvas = document.getElementById("threejs-text");
     if (!canvas) {
       return;
     }
@@ -33,32 +39,77 @@ layout: home
       alpha: true,
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const initialWidth = canvas.clientWidth || 1;
+    const initialHeight = canvas.clientHeight || 1;
+    renderer.setSize(initialWidth, initialHeight, false);
 
     const scene = new THREE.Scene();
     scene.background = null;
 
-    const camera = new THREE.PerspectiveCamera(45, 2, 0.1, 100);
-    camera.position.z = 5;
+    const camera = new THREE.PerspectiveCamera(40, 2, 0.1, 200);
+    camera.position.set(0, 0, 26);
+    camera.aspect = initialWidth / initialHeight;
+    camera.updateProjectionMatrix();
 
-    const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x1e90ff,
-      emissive: 0x041830,
-      roughness: 0.35,
-      metalness: 0.15,
-    });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
+    const textGroup = new THREE.Group();
+    scene.add(textGroup);
 
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(5, 5, 5);
-    scene.add(light);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1);
+    keyLight.position.set(6, 8, 10);
+    scene.add(keyLight);
 
-    const fillLight = new THREE.DirectionalLight(0x4dabf7, 0.6);
-    fillLight.position.set(-4, -2, 3);
-    scene.add(fillLight);
+    const rimLight = new THREE.DirectionalLight(0x60a5fa, 0.8);
+    rimLight.position.set(-7, -4, 5);
+    scene.add(rimLight);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+
+    const loader = new THREE.FontLoader();
+    const textString = canvas.dataset.text || "Creative Coding";
+    const fontUrl = "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json";
+
+    loader.load(
+      fontUrl,
+      function (font) {
+        const textGeometry = new THREE.TextGeometry(textString, {
+          font,
+          size: 3.75,
+          height: 1.3,
+          curveSegments: 12,
+          bevelEnabled: true,
+          bevelThickness: 0.35,
+          bevelSize: 0.3,
+          bevelOffset: 0,
+          bevelSegments: 5,
+        });
+        textGeometry.center();
+
+        const textMaterial = new THREE.MeshStandardMaterial({
+          color: 0x7dd3fc,
+          emissive: 0x0f172a,
+          roughness: 0.38,
+          metalness: 0.55,
+        });
+
+        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        textGroup.add(textMesh);
+
+        const edgeMaterial = new THREE.LineBasicMaterial({
+          color: 0x38bdf8,
+          transparent: true,
+          opacity: 0.35,
+        });
+        const textEdges = new THREE.LineSegments(
+          new THREE.EdgesGeometry(textGeometry),
+          edgeMaterial
+        );
+        textGroup.add(textEdges);
+      },
+      undefined,
+      function () {
+        console.warn("Three.js font failed to load: " + fontUrl);
+      }
+    );
 
     function resizeRendererToDisplaySize() {
       const width = canvas.clientWidth;
@@ -90,8 +141,9 @@ layout: home
 
       handleResize();
 
-      cube.rotation.x = time * 0.7;
-      cube.rotation.y = time * 1.1;
+      textGroup.rotation.y = time * 0.45;
+      textGroup.rotation.x = Math.sin(time * 0.45) * 0.25;
+      textGroup.rotation.z = Math.sin(time * 0.3) * 0.1;
 
       renderer.render(scene, camera);
     }
