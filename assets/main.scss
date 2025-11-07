@@ -425,25 +425,6 @@ html {
   color: white;
 }
 
-// Scrollbar styling for dark mode
-[data-theme="dark"] ::-webkit-scrollbar {
-  width: 12px;
-}
-
-[data-theme="dark"] ::-webkit-scrollbar-track {
-  background: var(--bg-color);
-  border-left: 1px solid var(--border-color);
-}
-
-[data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  border-radius: 6px;
-}
-
-[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, var(--accent-tertiary), var(--accent-quaternary));
-}
-
 // Mobile-specific improvements
 @media (max-width: 768px) {
   body {
