@@ -22,11 +22,17 @@ layout: home
 import * as THREE from 'three';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 let container;
 let camera, cameraTarget, scene, renderer;
 let group, textMesh1, textMesh2, pointLight;
 let materials = [];
+let particles, particleSystem;
+let composer, bloomPass;
+let mouseX = 0, mouseY = 0;
 let targetRotation = 0;
 let targetRotationOnPointerDown = 0;
 let pointerX = 0;
@@ -78,6 +84,31 @@ function updateThemeColors() {
   if (pointLight) {
     pointLight.color.setHex(colors.pointLight);
   }
+
+  // Update bloom settings based on theme
+  if (bloomPass) {
+    bloomPass.strength = theme === 'dark' ? 1.2 : 0.8;
+    bloomPass.radius = theme === 'dark' ? 0.6 : 0.4;
+    bloomPass.threshold = theme === 'dark' ? 0.3 : 0.5;
+  }
+
+  // Update particle colors
+  if (particleSystem && particles) {
+    const color1 = new THREE.Color(theme === 'dark' ? 0x8b5cf6 : 0x7dd3fc);
+    const color2 = new THREE.Color(theme === 'dark' ? 0x22d3ee : 0x3b82f6);
+    const colors = particles.attributes.color.array;
+    const count = colors.length / 3;
+
+    for (let i = 0; i < count; i++) {
+      const mixRatio = Math.random();
+      const color = color1.clone().lerp(color2, mixRatio);
+      colors[i * 3] = color.r;
+      colors[i * 3 + 1] = color.g;
+      colors[i * 3 + 2] = color.b;
+    }
+
+    particles.attributes.color.needsUpdate = true;
+  }
 }
 
 init();
@@ -96,6 +127,56 @@ observer.observe(document.documentElement, {
   attributes: true,
   attributeFilter: ['data-theme']
 });
+
+// Create particle system
+function createParticles() {
+  const particleCount = 1000;
+  const positions = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
+  const sizes = new Float32Array(particleCount);
+
+  const theme = getCurrentTheme();
+  const color1 = new THREE.Color(theme === 'dark' ? 0x8b5cf6 : 0x7dd3fc);
+  const color2 = new THREE.Color(theme === 'dark' ? 0x22d3ee : 0x3b82f6);
+
+  for (let i = 0; i < particleCount; i++) {
+    // Position particles in a large sphere around the scene
+    const radius = Math.random() * 600 + 400;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.random() * Math.PI;
+
+    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta) + 100;
+    positions[i * 3 + 2] = radius * Math.cos(phi);
+
+    // Color variation
+    const mixRatio = Math.random();
+    const color = color1.clone().lerp(color2, mixRatio);
+    colors[i * 3] = color.r;
+    colors[i * 3 + 1] = color.g;
+    colors[i * 3 + 2] = color.b;
+
+    // Size variation
+    sizes[i] = Math.random() * 3 + 1;
+  }
+
+  particles = new THREE.BufferGeometry();
+  particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  particles.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+  const particleMaterial = new THREE.PointsMaterial({
+    size: 2,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.8,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true
+  });
+
+  particleSystem = new THREE.Points(particles, particleMaterial);
+  scene.add(particleSystem);
+}
 
 function init() {
   container = document.getElementById('threejs-container');
@@ -183,11 +264,30 @@ function init() {
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
-  
+
+  // POST-PROCESSING
+  composer = new EffectComposer(renderer);
+  const renderPass = new RenderPass(scene, camera);
+  composer.addPass(renderPass);
+
+  // Bloom pass for glow effect
+  const theme = getCurrentTheme();
+  bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    theme === 'dark' ? 1.2 : 0.8,  // strength
+    theme === 'dark' ? 0.6 : 0.4,   // radius
+    theme === 'dark' ? 0.3 : 0.5    // threshold
+  );
+  composer.addPass(bloomPass);
+
+  // Create particle system
+  createParticles();
+
   // EVENTS
   container.style.touchAction = 'none';
   container.addEventListener('pointerdown', onPointerDown);
-  
+  container.addEventListener('pointermove', onMouseMove);
+
   window.addEventListener('resize', onWindowResize);
 }
 
@@ -195,6 +295,13 @@ function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function onMouseMove(event) {
+  // Track mouse position for dynamic lighting
+  mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+  mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 
 function onPointerDown(event) {
@@ -234,18 +341,49 @@ function onPointerUp(event) {
 
 function animate() {
   requestAnimationFrame(animate);
-  
+
+  // Animate particles
+  if (particleSystem) {
+    particleSystem.rotation.y += 0.0002;
+    particleSystem.rotation.x += 0.0001;
+
+    // Subtle pulsing effect on particle opacity
+    const time = Date.now() * 0.0005;
+    particleSystem.material.opacity = 0.6 + Math.sin(time) * 0.2;
+  }
+
+  // Dynamic lighting based on mouse position
+  if (pointLight) {
+    const targetX = mouseX * 200;
+    const targetY = mouseY * 100 + 100;
+
+    // Smooth interpolation
+    pointLight.position.x += (targetX - pointLight.position.x) * 0.05;
+    pointLight.position.y += (targetY - pointLight.position.y) * 0.05;
+
+    // Subtle color shift based on mouse position
+    const hue = (mouseX + 1) * 0.5; // 0 to 1
+    const time = Date.now() * 0.0001;
+    pointLight.color.setHSL(hue * 0.3 + Math.sin(time) * 0.1, 0.8, 0.6);
+  }
+
   // Auto-rotate if not interacting
   if (!isUserInteracting) {
     targetRotation += autoRotateSpeed;
   }
-  
+
   group.rotation.y += (targetRotation - group.rotation.y) * 0.05;
-  
+
+  // Smooth camera movement
+  const targetCameraX = mouseX * 30;
+  const targetCameraY = 150 - mouseY * 20;
+  camera.position.x += (targetCameraX - camera.position.x) * 0.02;
+  camera.position.y += (targetCameraY - camera.position.y) * 0.02;
+
   camera.lookAt(cameraTarget);
-  
-  renderer.clear();
-  renderer.render(scene, camera);
+
+  // Render with post-processing
+  composer.render();
 }
 </script>
 
