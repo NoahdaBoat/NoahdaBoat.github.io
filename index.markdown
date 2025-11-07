@@ -42,6 +42,10 @@ let autoRotateTimeout = null;
 const autoRotateSpeed = 0.01;
 const autoRotateDelay = 2000; // 2 seconds
 
+// Detect mobile devices
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  || window.innerWidth < 768;
+
 // Theme colors
 const themeColors = {
   light: {
@@ -130,7 +134,8 @@ observer.observe(document.documentElement, {
 
 // Create particle system
 function createParticles() {
-  const particleCount = 1000;
+  // Reduce particle count on mobile for better performance
+  const particleCount = isMobile ? 300 : 1000;
   const positions = new Float32Array(particleCount * 3);
   const colors = new Float32Array(particleCount * 3);
   const sizes = new Float32Array(particleCount);
@@ -260,8 +265,13 @@ function init() {
   scene.add(plane);
   
   // RENDERER
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer = new THREE.WebGLRenderer({
+    antialias: !isMobile, // Disable antialiasing on mobile for performance
+    alpha: true,
+    powerPreference: isMobile ? 'low-power' : 'high-performance'
+  });
+  // Limit pixel ratio on mobile to improve performance
+  renderer.setPixelRatio(isMobile ? Math.min(window.devicePixelRatio, 2) : window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   container.appendChild(renderer.domElement);
 
@@ -270,13 +280,17 @@ function init() {
   const renderPass = new RenderPass(scene, camera);
   composer.addPass(renderPass);
 
-  // Bloom pass for glow effect
+  // Bloom pass for glow effect - reduced quality on mobile
   const theme = getCurrentTheme();
+  const bloomStrength = theme === 'dark' ? (isMobile ? 0.8 : 1.2) : (isMobile ? 0.5 : 0.8);
+  const bloomRadius = theme === 'dark' ? (isMobile ? 0.4 : 0.6) : (isMobile ? 0.3 : 0.4);
+  const bloomThreshold = theme === 'dark' ? 0.3 : 0.5;
+
   bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    theme === 'dark' ? 1.2 : 0.8,  // strength
-    theme === 'dark' ? 0.6 : 0.4,   // radius
-    theme === 'dark' ? 0.3 : 0.5    // threshold
+    bloomStrength,
+    bloomRadius,
+    bloomThreshold
   );
   composer.addPass(bloomPass);
 
@@ -306,33 +320,57 @@ function onMouseMove(event) {
 
 function onPointerDown(event) {
   if (event.isPrimary === false) return;
-  
+
+  // Prevent default touch behavior on mobile to avoid page scrolling
+  if (isMobile && event.type === 'touchstart') {
+    event.preventDefault();
+  }
+
   isUserInteracting = true;
   if (autoRotateTimeout) {
     clearTimeout(autoRotateTimeout);
     autoRotateTimeout = null;
   }
-  
+
   pointerXOnPointerDown = event.clientX - window.innerWidth / 2;
   targetRotationOnPointerDown = targetRotation;
-  
+
   document.addEventListener('pointermove', onPointerMove);
   document.addEventListener('pointerup', onPointerUp);
+
+  // Add touch-specific event listeners for better mobile support
+  if (isMobile) {
+    document.addEventListener('touchmove', onPointerMove, { passive: false });
+    document.addEventListener('touchend', onPointerUp);
+  }
 }
 
 function onPointerMove(event) {
   if (event.isPrimary === false) return;
-  
+
+  // Prevent default on touch to avoid scrolling
+  if (isMobile && event.type === 'touchmove') {
+    event.preventDefault();
+  }
+
   pointerX = event.clientX - window.innerWidth / 2;
-  targetRotation = targetRotationOnPointerDown + (pointerX - pointerXOnPointerDown) * 0.02;
+  // Increase sensitivity on mobile for easier rotation
+  const sensitivity = isMobile ? 0.03 : 0.02;
+  targetRotation = targetRotationOnPointerDown + (pointerX - pointerXOnPointerDown) * sensitivity;
 }
 
 function onPointerUp(event) {
   if (event.isPrimary === false) return;
-  
+
   document.removeEventListener('pointermove', onPointerMove);
   document.removeEventListener('pointerup', onPointerUp);
-  
+
+  // Remove touch-specific event listeners
+  if (isMobile) {
+    document.removeEventListener('touchmove', onPointerMove);
+    document.removeEventListener('touchend', onPointerUp);
+  }
+
   // Resume auto-rotation after delay
   autoRotateTimeout = setTimeout(() => {
     isUserInteracting = false;
@@ -347,13 +385,15 @@ function animate() {
     particleSystem.rotation.y += 0.0002;
     particleSystem.rotation.x += 0.0001;
 
-    // Subtle pulsing effect on particle opacity
-    const time = Date.now() * 0.0005;
-    particleSystem.material.opacity = 0.6 + Math.sin(time) * 0.2;
+    // Subtle pulsing effect on particle opacity (skip on mobile to save performance)
+    if (!isMobile) {
+      const time = Date.now() * 0.0005;
+      particleSystem.material.opacity = 0.6 + Math.sin(time) * 0.2;
+    }
   }
 
-  // Dynamic lighting based on mouse position
-  if (pointLight) {
+  // Dynamic lighting based on mouse position (reduced on mobile)
+  if (pointLight && !isMobile) {
     const targetX = mouseX * 200;
     const targetY = mouseY * 100 + 100;
 
@@ -374,11 +414,13 @@ function animate() {
 
   group.rotation.y += (targetRotation - group.rotation.y) * 0.05;
 
-  // Smooth camera movement
-  const targetCameraX = mouseX * 30;
-  const targetCameraY = 150 - mouseY * 20;
-  camera.position.x += (targetCameraX - camera.position.x) * 0.02;
-  camera.position.y += (targetCameraY - camera.position.y) * 0.02;
+  // Smooth camera movement (disabled on mobile for better performance)
+  if (!isMobile) {
+    const targetCameraX = mouseX * 30;
+    const targetCameraY = 150 - mouseY * 20;
+    camera.position.x += (targetCameraX - camera.position.x) * 0.02;
+    camera.position.y += (targetCameraY - camera.position.y) * 0.02;
+  }
 
   camera.lookAt(cameraTarget);
 
