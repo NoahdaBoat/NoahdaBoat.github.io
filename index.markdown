@@ -28,6 +28,7 @@ let camera, cameraTarget, scene, renderer;
 let group, textMesh1, pointLight;
 let materials = [];
 let particles, particleSystem;
+let particleMixRatios = []; // Store consistent mix ratios for particle colors
 let targetRotation = 0;
 let targetRotationOnPointerDown = 0;
 let pointerX = 0;
@@ -85,7 +86,7 @@ function updateThemeColors() {
     pointLight.color.setHex(colors.pointLight);
   }
 
-  // Update particle colors
+  // Update particle colors using stored mix ratios for consistency
   if (particleSystem && particles) {
     const colorArray = particles.attributes.color.array;
     const count = colorArray.length / 3;
@@ -96,7 +97,8 @@ function updateThemeColors() {
     const tempColor = new THREE.Color();
 
     for (let i = 0; i < count; i++) {
-      const mixRatio = Math.random();
+      // Reuse stored mix ratio for consistent particle colors across theme changes
+      const mixRatio = particleMixRatios[i] || Math.random();
       tempColor.copy(color1).lerp(color2, mixRatio);
       colorArray[i * 3] = tempColor.r;
       colorArray[i * 3 + 1] = tempColor.g;
@@ -130,6 +132,12 @@ function createParticles() {
   const positions = new Float32Array(particleCount * 3);
   const colors = new Float32Array(particleCount * 3);
 
+  // Generate and store mix ratios to ensure consistency across theme changes
+  particleMixRatios = [];
+  for (let i = 0; i < particleCount; i++) {
+    particleMixRatios.push(Math.random());
+  }
+
   const theme = getCurrentTheme();
   const hex1 = theme === 'dark' ? 0x8b5cf6 : 0x7dd3fc;
   const hex2 = theme === 'dark' ? 0x22d3ee : 0x3b82f6;
@@ -147,9 +155,8 @@ function createParticles() {
     positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta) + 100;
     positions[i * 3 + 2] = radius * Math.cos(phi);
 
-    // Color variation (reuse tempColor object)
-    const mixRatio = Math.random();
-    tempColor.copy(color1).lerp(color2, mixRatio);
+    // Color variation using stored mix ratio for consistency
+    tempColor.copy(color1).lerp(color2, particleMixRatios[i]);
     colors[i * 3] = tempColor.r;
     colors[i * 3 + 1] = tempColor.g;
     colors[i * 3 + 2] = tempColor.b;
@@ -302,7 +309,7 @@ function onPointerDown(event) {
   if (event.isPrimary === false) return;
 
   // Prevent default touch behavior on mobile to avoid page scrolling
-  if (isMobile && event.type === 'touchstart') {
+  if (isMobile && event.type === 'pointerdown') {
     event.preventDefault();
   }
 
