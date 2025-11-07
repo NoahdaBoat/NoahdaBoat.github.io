@@ -25,7 +25,8 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 let container;
 let camera, cameraTarget, scene, renderer;
-let group, textMesh1, textMesh2;
+let group, textMesh1, textMesh2, pointLight;
+let materials = [];
 let targetRotation = 0;
 let targetRotationOnPointerDown = 0;
 let pointerX = 0;
@@ -34,6 +35,20 @@ let isUserInteracting = false;
 let autoRotateTimeout = null;
 const autoRotateSpeed = 0.01;
 const autoRotateDelay = 2000; // 2 seconds
+
+// Theme colors
+const themeColors = {
+  light: {
+    front: 0x7dd3fc,
+    side: 0x3b82f6,
+    pointLight: 0xffffff
+  },
+  dark: {
+    front: 0xa78bfa,
+    side: 0x8b5cf6,
+    pointLight: 0x22d3ee
+  }
+};
 
 const text = "{{ site.title | replace: "'", "\\'" }}";
 const bevelEnabled = true;
@@ -45,8 +60,42 @@ const bevelThickness = 2;
 const bevelSize = 1.5;
 const mirror = true;
 
+// Get current theme
+function getCurrentTheme() {
+  return document.documentElement.getAttribute('data-theme') || 'dark';
+}
+
+// Update colors based on theme
+function updateThemeColors() {
+  const theme = getCurrentTheme();
+  const colors = themeColors[theme];
+
+  if (materials.length > 0) {
+    materials[0].color.setHex(colors.front);
+    materials[1].color.setHex(colors.side);
+  }
+
+  if (pointLight) {
+    pointLight.color.setHex(colors.pointLight);
+  }
+}
+
 init();
 animate();
+
+// Listen for theme changes
+const observer = new MutationObserver((mutations) => {
+  mutations.forEach((mutation) => {
+    if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+      updateThemeColors();
+    }
+  });
+});
+
+observer.observe(document.documentElement, {
+  attributes: true,
+  attributeFilter: ['data-theme']
+});
 
 function init() {
   container = document.getElementById('threejs-container');
@@ -65,16 +114,18 @@ function init() {
   const dirLight = new THREE.DirectionalLight(0xffffff, 0.4);
   dirLight.position.set(0, 0, 1).normalize();
   scene.add(dirLight);
-  
-  const pointLight = new THREE.PointLight(0xffffff, 4.5, 0, 0);
-  pointLight.color.setHSL(Math.random(), 1, 0.5);
+
+  const theme = getCurrentTheme();
+  const colors = themeColors[theme];
+
+  pointLight = new THREE.PointLight(colors.pointLight, 4.5, 0, 0);
   pointLight.position.set(0, 100, 90);
   scene.add(pointLight);
-  
-  // MATERIALS
-  const materials = [
-    new THREE.MeshPhongMaterial({ color: 0x7dd3fc, flatShading: true }), // front
-    new THREE.MeshPhongMaterial({ color: 0x3b82f6 }) // side
+
+  // MATERIALS - using theme colors
+  materials = [
+    new THREE.MeshPhongMaterial({ color: colors.front, flatShading: true }), // front
+    new THREE.MeshPhongMaterial({ color: colors.side }) // side
   ];
   
   group = new THREE.Group();
