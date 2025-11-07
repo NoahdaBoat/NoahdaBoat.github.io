@@ -40,7 +40,7 @@
 body {
   background-color: var(--bg-color) !important;
   color: var(--text-color) !important;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  // Removed transition for performance (instant theme switching)
   font-family: "Times New Roman", Times, serif !important;
 }
 
@@ -73,9 +73,7 @@ a:hover {
   color: var(--link-hover, var(--link-color)) !important;
 }
 
-[data-theme="dark"] a:hover {
-  text-shadow: 0 0 8px var(--glow-cyan);
-}
+// Removed glow text-shadow for performance
 
 pre, code {
   background-color: var(--code-bg);
@@ -91,6 +89,99 @@ pre, code {
 
 [data-theme="dark"] code {
   border: 1px solid var(--border-color);
+}
+
+// Comprehensive dark theme syntax highlighting
+[data-theme="dark"] .highlight {
+  background: var(--code-bg) !important;
+  color: var(--text-color) !important;
+
+  .hll { background-color: rgba(139, 92, 246, 0.1) !important }
+  .c   { color: #7c7c7c; font-style: italic } // Comment
+  .err { color: #f48771; background-color: rgba(244, 135, 113, 0.1) } // Error
+  .g   { color: var(--text-color) } // Generic
+  .k   { color: #c792ea; font-weight: bold } // Keyword
+  .l   { color: #f78c6c } // Literal
+  .n   { color: var(--text-color) } // Name
+  .o   { color: #89ddff; font-weight: bold } // Operator
+  .x   { color: var(--text-color) } // Other
+  .p   { color: var(--text-color) } // Punctuation
+  .cm  { color: #7c7c7c; font-style: italic } // Comment.Multiline
+  .cp  { color: #7c7c7c; font-weight: bold } // Comment.Preproc
+  .c1  { color: #7c7c7c; font-style: italic } // Comment.Single
+  .cs  { color: #7c7c7c; font-weight: bold; font-style: italic } // Comment.Special
+  .gd  { color: #f48771; background-color: rgba(244, 135, 113, 0.1) } // Generic.Deleted
+  .ge  { color: var(--text-color); font-style: italic } // Generic.Emph
+  .gr  { color: #f48771 } // Generic.Error
+  .gh  { color: #82aaff; font-weight: bold } // Generic.Heading
+  .gi  { color: #c3e88d; background-color: rgba(195, 232, 141, 0.1) } // Generic.Inserted
+  .go  { color: #7c7c7c } // Generic.Output
+  .gp  { color: #7c7c7c; font-weight: bold } // Generic.Prompt
+  .gs  { color: var(--text-color); font-weight: bold } // Generic.Strong
+  .gu  { color: #82aaff; font-weight: bold } // Generic.Subheading
+  .gt  { color: #f48771 } // Generic.Traceback
+  .kc  { color: #c792ea; font-weight: bold } // Keyword.Constant
+  .kd  { color: #c792ea; font-weight: bold } // Keyword.Declaration
+  .kn  { color: #c792ea; font-weight: bold } // Keyword.Namespace
+  .kp  { color: #c792ea; font-weight: bold } // Keyword.Pseudo
+  .kr  { color: #c792ea; font-weight: bold } // Keyword.Reserved
+  .kt  { color: #82aaff; font-weight: bold } // Keyword.Type
+  .ld  { color: #c3e88d } // Literal.Date
+  .m   { color: #f78c6c } // Literal.Number
+  .s   { color: #c3e88d } // Literal.String
+  .na  { color: #82aaff } // Name.Attribute
+  .nb  { color: #82aaff } // Name.Builtin
+  .nc  { color: #ffcb6b; font-weight: bold } // Name.Class
+  .no  { color: #82aaff } // Name.Constant
+  .nd  { color: #c792ea } // Name.Decorator
+  .ni  { color: #ffcb6b } // Name.Entity
+  .ne  { color: #f48771; font-weight: bold } // Name.Exception
+  .nf  { color: #82aaff; font-weight: bold } // Name.Function
+  .nl  { color: #ffcb6b } // Name.Label
+  .nn  { color: #ffcb6b } // Name.Namespace
+  .nx  { color: #82aaff } // Name.Other
+  .nt  { color: #f07178 } // Name.Tag
+  .nv  { color: #82aaff } // Name.Variable
+  .ow  { color: #89ddff; font-weight: bold } // Operator.Word
+  .w   { color: var(--text-color) } // Text.Whitespace
+  .mf  { color: #f78c6c } // Literal.Number.Float
+  .mh  { color: #f78c6c } // Literal.Number.Hex
+  .mi  { color: #f78c6c } // Literal.Number.Integer
+  .mo  { color: #f78c6c } // Literal.Number.Oct
+  .sa  { color: #c3e88d } // Literal.String.Affix
+  .sb  { color: #c3e88d } // Literal.String.Backtick
+  .sc  { color: #c3e88d } // Literal.String.Char
+  .sd  { color: #7c7c7c; font-style: italic } // Literal.String.Doc
+  .s1  { color: #c3e88d } // Literal.String.Single
+  .s2  { color: #c3e88d } // Literal.String.Double
+  .se  { color: #f78c6c } // Literal.String.Escape
+  .sh  { color: #c3e88d } // Literal.String.Heredoc
+  .si  { color: #f78c6c } // Literal.String.Interpol
+  .sx  { color: #c3e88d } // Literal.String.Other
+  .sr  { color: #c3e88d } // Literal.String.Regex
+  .s1  { color: #c3e88d } // Literal.String.Single
+  .ss  { color: #c3e88d } // Literal.String.Symbol
+  .bp  { color: #82aaff } // Name.Builtin.Pseudo
+  .vc  { color: #82aaff } // Name.Variable.Class
+  .vg  { color: #82aaff } // Name.Variable.Global
+  .vi  { color: #82aaff } // Name.Variable.Instance
+  .il  { color: #f78c6c } // Literal.Number.Integer.Long
+}
+
+// Override Minima's hardcoded highlighter-rouge styles
+[data-theme="dark"] .highlighter-rouge {
+  background: var(--code-bg) !important;
+
+  .highlight {
+    background: var(--code-bg) !important;
+    color: var(--text-color) !important;
+  }
+}
+
+// Light theme syntax highlighting (fallback to ensure consistency)
+.highlight {
+  background: var(--code-bg) !important;
+  color: var(--text-color) !important;
 }
 
 blockquote {
@@ -125,15 +216,15 @@ blockquote {
 }
 
 [data-theme="dark"] .theme-toggle {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(6, 182, 212, 0.1));
+  background: rgba(139, 92, 246, 0.15);
   border: 2px solid var(--accent-primary);
-  backdrop-filter: blur(10px);
+  // Removed backdrop-filter blur for performance
 }
 
 [data-theme="dark"] .theme-toggle:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(6, 182, 212, 0.2));
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4), 0 0 40px rgba(6, 182, 212, 0.2);
+  background: rgba(139, 92, 246, 0.25);
   transform: scale(1.05);
+  // Removed box-shadow for performance
 }
 
 .theme-toggle::before {
@@ -160,25 +251,20 @@ blockquote {
   display: block !important;
 }
 
-// Gradient text for headings in dark mode
-[data-theme="dark"] h1,
+// Solid colors for headings in dark mode (removed gradients for performance)
+[data-theme="dark"] h1 {
+  color: #1e40af; // Navy blue instead of purple
+}
+
 [data-theme="dark"] h2 {
-  background: linear-gradient(135deg, var(--accent-tertiary), var(--accent-quaternary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  position: relative;
+  color: var(--accent-quaternary);
 }
 
 [data-theme="dark"] h3 {
   color: var(--accent-secondary);
 }
 
-// Add subtle glow to post titles
-[data-theme="dark"] .post-title,
-[data-theme="dark"] .page-heading {
-  text-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
-}
+// Removed text-shadow from post titles for performance
 
 // Style post meta information
 [data-theme="dark"] .post-meta {
@@ -204,11 +290,9 @@ blockquote {
   margin: 2rem auto;
   border-radius: 24px;
   overflow: hidden;
-  background: radial-gradient(circle at 20% 20%, rgba(76, 201, 240, 0.35), transparent 55%),
-    radial-gradient(circle at 80% 30%, rgba(76, 110, 245, 0.45), transparent 60%),
-    linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(15, 118, 110, 0.65));
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(15, 118, 110, 0.65));
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
-  transition: all 0.5s ease;
+  // Removed transition for performance
   touch-action: none; // Prevent default touch behaviors
   user-select: none; // Prevent text selection during interaction
   -webkit-user-select: none;
@@ -216,26 +300,17 @@ blockquote {
 }
 
 [data-theme="dark"] .threejs-hero {
-  background: radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.4), transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.35), transparent 55%),
-    radial-gradient(circle at 50% 50%, rgba(167, 139, 250, 0.2), transparent 70%),
-    linear-gradient(135deg, rgba(5, 5, 5, 0.95), rgba(10, 10, 10, 0.9));
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6),
-    0 0 80px rgba(139, 92, 246, 0.3),
-    inset 0 0 100px rgba(139, 92, 246, 0.1);
+  background: linear-gradient(135deg, rgba(10, 10, 15, 0.95), rgba(20, 15, 30, 0.9));
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
   border: 1px solid rgba(139, 92, 246, 0.2);
+  // Removed multiple radial gradients and inset shadow for performance
 }
 
 .threejs-hero canvas {
   width: 100%;
   height: 100%;
   display: block;
-  filter: saturate(1.1);
-  transition: filter 0.5s ease;
-}
-
-[data-theme="dark"] .threejs-hero canvas {
-  filter: saturate(1.3) brightness(1.1);
+  // Removed filters for performance (very expensive on animated WebGL canvas)
 }
 
 .threejs-hero__overlay {
@@ -299,10 +374,7 @@ html {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
-// Post content improvements
-[data-theme="dark"] .post-content {
-  text-shadow: 0 0 1px rgba(232, 232, 232, 0.1);
-}
+// Removed text-shadow from post content for performance
 
 // Improved table styling in dark mode
 [data-theme="dark"] table {
@@ -338,8 +410,8 @@ html {
 [data-theme="dark"] input:focus,
 [data-theme="dark"] textarea:focus {
   border-color: var(--accent-primary);
-  box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
   outline: none;
+  // Removed box-shadow for performance
 }
 
 // Selection styling

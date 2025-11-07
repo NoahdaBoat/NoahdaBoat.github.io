@@ -22,17 +22,12 @@ layout: home
 import * as THREE from 'three';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 let container;
 let camera, cameraTarget, scene, renderer;
-let group, textMesh1, textMesh2, pointLight;
+let group, textMesh1, pointLight;
 let materials = [];
 let particles, particleSystem;
-let composer, bloomPass;
-let mouseX = 0, mouseY = 0;
 let targetRotation = 0;
 let targetRotationOnPointerDown = 0;
 let pointerX = 0;
@@ -61,14 +56,15 @@ const themeColors = {
 };
 
 const text = "{{ site.title | replace: "'", "\\'" }}";
-const bevelEnabled = true;
-const depth = 20;
-const size = 60;
+// Optimized geometry settings for 60 FPS performance with good quality
+const bevelEnabled = false; // Disabled (bevels are expensive)
+const depth = 6; // Moderate depth for visual appeal
+const size = 45; // Good visual size with performance
 const hover = 30;
-const curveSegments = 4;
-const bevelThickness = 2;
-const bevelSize = 1.5;
-const mirror = true;
+const curveSegments = 1; // Minimal curves maintains smooth appearance
+const bevelThickness = 0; // Not used
+const bevelSize = 0; // Not used
+const mirror = false; // Single mesh for best performance
 
 // Get current theme
 function getCurrentTheme() {
@@ -89,26 +85,22 @@ function updateThemeColors() {
     pointLight.color.setHex(colors.pointLight);
   }
 
-  // Update bloom settings based on theme
-  if (bloomPass) {
-    bloomPass.strength = theme === 'dark' ? 1.2 : 0.8;
-    bloomPass.radius = theme === 'dark' ? 0.6 : 0.4;
-    bloomPass.threshold = theme === 'dark' ? 0.3 : 0.5;
-  }
-
   // Update particle colors
   if (particleSystem && particles) {
-    const color1 = new THREE.Color(theme === 'dark' ? 0x8b5cf6 : 0x7dd3fc);
-    const color2 = new THREE.Color(theme === 'dark' ? 0x22d3ee : 0x3b82f6);
-    const colors = particles.attributes.color.array;
-    const count = colors.length / 3;
+    const colorArray = particles.attributes.color.array;
+    const count = colorArray.length / 3;
+    const hex1 = theme === 'dark' ? 0x8b5cf6 : 0x7dd3fc;
+    const hex2 = theme === 'dark' ? 0x22d3ee : 0x3b82f6;
+    const color1 = new THREE.Color(hex1);
+    const color2 = new THREE.Color(hex2);
+    const tempColor = new THREE.Color();
 
     for (let i = 0; i < count; i++) {
       const mixRatio = Math.random();
-      const color = color1.clone().lerp(color2, mixRatio);
-      colors[i * 3] = color.r;
-      colors[i * 3 + 1] = color.g;
-      colors[i * 3 + 2] = color.b;
+      tempColor.copy(color1).lerp(color2, mixRatio);
+      colorArray[i * 3] = tempColor.r;
+      colorArray[i * 3 + 1] = tempColor.g;
+      colorArray[i * 3 + 2] = tempColor.b;
     }
 
     particles.attributes.color.needsUpdate = true;
@@ -132,20 +124,21 @@ observer.observe(document.documentElement, {
   attributeFilter: ['data-theme']
 });
 
-// Create particle system
+// Create particle system with minimal count for stable 60 FPS
 function createParticles() {
-  // Reduce particle count on mobile for better performance
-  const particleCount = isMobile ? 300 : 1000;
+  const particleCount = isMobile ? 12 : 20;
   const positions = new Float32Array(particleCount * 3);
   const colors = new Float32Array(particleCount * 3);
-  const sizes = new Float32Array(particleCount);
 
   const theme = getCurrentTheme();
-  const color1 = new THREE.Color(theme === 'dark' ? 0x8b5cf6 : 0x7dd3fc);
-  const color2 = new THREE.Color(theme === 'dark' ? 0x22d3ee : 0x3b82f6);
+  const hex1 = theme === 'dark' ? 0x8b5cf6 : 0x7dd3fc;
+  const hex2 = theme === 'dark' ? 0x22d3ee : 0x3b82f6;
+  const color1 = new THREE.Color(hex1);
+  const color2 = new THREE.Color(hex2);
+  const tempColor = new THREE.Color();
 
   for (let i = 0; i < particleCount; i++) {
-    // Position particles in a large sphere around the scene
+    // Position particles in a sphere around the scene
     const radius = Math.random() * 600 + 400;
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.random() * Math.PI;
@@ -154,28 +147,23 @@ function createParticles() {
     positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta) + 100;
     positions[i * 3 + 2] = radius * Math.cos(phi);
 
-    // Color variation
+    // Color variation (reuse tempColor object)
     const mixRatio = Math.random();
-    const color = color1.clone().lerp(color2, mixRatio);
-    colors[i * 3] = color.r;
-    colors[i * 3 + 1] = color.g;
-    colors[i * 3 + 2] = color.b;
-
-    // Size variation
-    sizes[i] = Math.random() * 3 + 1;
+    tempColor.copy(color1).lerp(color2, mixRatio);
+    colors[i * 3] = tempColor.r;
+    colors[i * 3 + 1] = tempColor.g;
+    colors[i * 3 + 2] = tempColor.b;
   }
 
   particles = new THREE.BufferGeometry();
   particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  particles.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
   const particleMaterial = new THREE.PointsMaterial({
     size: 2,
     vertexColors: true,
-    transparent: true,
-    opacity: 0.8,
-    blending: THREE.AdditiveBlending,
+    transparent: false, // No transparency for performance
+    blending: THREE.NormalBlending,
     sizeAttenuation: true
   });
 
@@ -184,34 +172,43 @@ function createParticles() {
 }
 
 function init() {
-  container = document.getElementById('threejs-container');
-  
-  // CAMERA
-  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000);
-  camera.position.set(0, 150, 700);
-  cameraTarget = new THREE.Vector3(0, 100, 0);
-  
-  // SCENE
-  scene = new THREE.Scene();
-  scene.background = null; // transparent background
-  scene.fog = new THREE.Fog(0x000000, 250, 1400);
-  
-  // LIGHTS
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.4);
-  dirLight.position.set(0, 0, 1).normalize();
-  scene.add(dirLight);
+  try {
+    console.log('[Three.js] Initializing scene...');
+    container = document.getElementById('threejs-container');
 
+    if (!container) {
+      console.error('[Three.js] Container element not found!');
+      return;
+    }
+
+    // CAMERA
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000);
+    camera.position.set(0, 150, 700);
+    cameraTarget = new THREE.Vector3(0, 100, 0);
+    camera.lookAt(cameraTarget); // Set once here instead of every frame
+    console.log('[Three.js] Camera initialized');
+
+    // SCENE
+    scene = new THREE.Scene();
+    scene.background = null; // transparent background
+    // Fog removed for better performance
+    console.log('[Three.js] Scene created');
+  
+  // LIGHTS - Single simple light for maximum performance
   const theme = getCurrentTheme();
   const colors = themeColors[theme];
 
-  pointLight = new THREE.PointLight(colors.pointLight, 4.5, 0, 0);
-  pointLight.position.set(0, 100, 90);
-  scene.add(pointLight);
+  // Use ambient light for simplest rendering (no calculations per vertex/fragment)
+  const ambientLight = new THREE.AmbientLight(colors.pointLight, 1.5);
+  scene.add(ambientLight);
 
-  // MATERIALS - using theme colors
+  // Keep point light reference for theme updates
+  pointLight = ambientLight;
+
+  // MATERIALS - using theme colors (Lambert for better performance than Phong)
   materials = [
-    new THREE.MeshPhongMaterial({ color: colors.front, flatShading: true }), // front
-    new THREE.MeshPhongMaterial({ color: colors.side }) // side
+    new THREE.MeshLambertMaterial({ color: colors.front, flatShading: true }), // front
+    new THREE.MeshLambertMaterial({ color: colors.side }) // side
   ];
   
   group = new THREE.Group();
@@ -219,103 +216,86 @@ function init() {
   scene.add(group);
   
   // Load font and create text
-  const loader = new FontLoader();
-  loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function(font) {
-    const textGeo = new TextGeometry(text, {
-      font: font,
-      size: size,
-      depth: depth,
-      curveSegments: curveSegments,
-      bevelThickness: bevelThickness,
-      bevelSize: bevelSize,
-      bevelEnabled: bevelEnabled
+    console.log('[Three.js] Loading font...');
+    const loader = new FontLoader();
+    loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function(font) {
+      console.log('[Three.js] Font loaded successfully');
+      try {
+        const textGeo = new TextGeometry(text, {
+          font: font,
+          size: size,
+          depth: depth,
+          curveSegments: curveSegments,
+          bevelThickness: bevelThickness,
+          bevelSize: bevelSize,
+          bevelEnabled: bevelEnabled
+        });
+
+        textGeo.computeBoundingBox();
+        const centerOffset = -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
+
+        textMesh1 = new THREE.Mesh(textGeo, materials);
+        textMesh1.position.x = centerOffset;
+        textMesh1.position.y = hover;
+        textMesh1.position.z = 0;
+        textMesh1.rotation.x = 0;
+        textMesh1.rotation.y = Math.PI * 2;
+        group.add(textMesh1);
+        console.log('[Three.js] Text mesh 1 created and added to group');
+
+        if (mirror) {
+          textMesh2 = new THREE.Mesh(textGeo, materials);
+          textMesh2.position.x = centerOffset;
+          textMesh2.position.y = -hover;
+          textMesh2.position.z = depth;
+          textMesh2.rotation.x = Math.PI;
+          textMesh2.rotation.y = Math.PI * 2;
+          group.add(textMesh2);
+          console.log('[Three.js] Text mesh 2 (mirror) created and added to group');
+        }
+      } catch (error) {
+        console.error('[Three.js] Error creating text geometry:', error);
+      }
+    }, undefined, function(error) {
+      console.error('[Three.js] Error loading font:', error);
     });
-    
-    textGeo.computeBoundingBox();
-    const centerOffset = -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
-    
-    textMesh1 = new THREE.Mesh(textGeo, materials);
-    textMesh1.position.x = centerOffset;
-    textMesh1.position.y = hover;
-    textMesh1.position.z = 0;
-    textMesh1.rotation.x = 0;
-    textMesh1.rotation.y = Math.PI * 2;
-    group.add(textMesh1);
-    
-    if (mirror) {
-      textMesh2 = new THREE.Mesh(textGeo, materials);
-      textMesh2.position.x = centerOffset;
-      textMesh2.position.y = -hover;
-      textMesh2.position.z = depth;
-      textMesh2.rotation.x = Math.PI;
-      textMesh2.rotation.y = Math.PI * 2;
-      group.add(textMesh2);
-    }
-  }, undefined, function(error) {
-    console.error('Error loading font:', error);
-  });
   
-  // Add a plane
-  const plane = new THREE.Mesh(
-    new THREE.PlaneGeometry(10000, 10000),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.5, transparent: true })
-  );
-  plane.position.y = 100;
-  plane.rotation.x = -Math.PI / 2;
-  scene.add(plane);
-  
-  // RENDERER
-  renderer = new THREE.WebGLRenderer({
-    antialias: !isMobile, // Disable antialiasing on mobile for performance
-    alpha: true,
-    powerPreference: isMobile ? 'low-power' : 'high-performance'
-  });
-  // Limit pixel ratio on mobile to improve performance
-  renderer.setPixelRatio(isMobile ? Math.min(window.devicePixelRatio, 2) : window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  container.appendChild(renderer.domElement);
+  // RENDERER - Optimized for stable 60 FPS
+    renderer = new THREE.WebGLRenderer({
+      antialias: false, // Disabled for performance
+      alpha: false, // Keep disabled for performance
+      powerPreference: isMobile ? 'low-power' : 'default'
+    });
+    // Optimized resolution for consistent 60 FPS: 70% on desktop, 85% on mobile
+    const pixelRatio = isMobile ? Math.min(window.devicePixelRatio * 0.85, 2) : Math.min(window.devicePixelRatio * 0.7, 2);
+    renderer.setPixelRatio(pixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
+    console.log('[Three.js] Renderer created for 60 FPS performance');
 
-  // POST-PROCESSING
-  composer = new EffectComposer(renderer);
-  const renderPass = new RenderPass(scene, camera);
-  composer.addPass(renderPass);
+    // Create particle system (moderate count for quality)
+    createParticles();
+    console.log('[Three.js] Particle system created');
 
-  // Bloom pass for glow effect - reduced quality on mobile
-  const theme = getCurrentTheme();
-  const bloomStrength = theme === 'dark' ? (isMobile ? 0.8 : 1.2) : (isMobile ? 0.5 : 0.8);
-  const bloomRadius = theme === 'dark' ? (isMobile ? 0.4 : 0.6) : (isMobile ? 0.3 : 0.4);
-  const bloomThreshold = theme === 'dark' ? 0.3 : 0.5;
+    // EVENTS
+    container.style.touchAction = 'none';
+    container.addEventListener('pointerdown', onPointerDown);
+    // Note: onPointerMove is added dynamically during drag in onPointerDown
 
-  bloomPass = new UnrealBloomPass(
-    new THREE.Vector2(window.innerWidth, window.innerHeight),
-    bloomStrength,
-    bloomRadius,
-    bloomThreshold
-  );
-  composer.addPass(bloomPass);
+    window.addEventListener('resize', onWindowResize);
+    console.log('[Three.js] Event listeners attached');
+    console.log('[Three.js] Initialization complete!');
 
-  // Create particle system
-  createParticles();
-
-  // EVENTS
-  container.style.touchAction = 'none';
-  container.addEventListener('pointerdown', onPointerDown);
-  container.addEventListener('pointermove', onMouseMove);
-
-  window.addEventListener('resize', onWindowResize);
+  } catch (error) {
+    console.error('[Three.js] Initialization error:', error);
+  }
 }
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+  // Full resolution
   renderer.setSize(window.innerWidth, window.innerHeight);
-  composer.setSize(window.innerWidth, window.innerHeight);
-}
-
-function onMouseMove(event) {
-  // Track mouse position for dynamic lighting
-  mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-  mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 
 function onPointerDown(event) {
@@ -380,52 +360,16 @@ function onPointerUp(event) {
 function animate() {
   requestAnimationFrame(animate);
 
-  // Animate particles
-  if (particleSystem) {
-    particleSystem.rotation.y += 0.0002;
-    particleSystem.rotation.x += 0.0001;
-
-    // Subtle pulsing effect on particle opacity (skip on mobile to save performance)
-    if (!isMobile) {
-      const time = Date.now() * 0.0005;
-      particleSystem.material.opacity = 0.6 + Math.sin(time) * 0.2;
-    }
-  }
-
-  // Dynamic lighting based on mouse position (reduced on mobile)
-  if (pointLight && !isMobile) {
-    const targetX = mouseX * 200;
-    const targetY = mouseY * 100 + 100;
-
-    // Smooth interpolation
-    pointLight.position.x += (targetX - pointLight.position.x) * 0.05;
-    pointLight.position.y += (targetY - pointLight.position.y) * 0.05;
-
-    // Subtle color shift based on mouse position
-    const hue = (mouseX + 1) * 0.5; // 0 to 1
-    const time = Date.now() * 0.0001;
-    pointLight.color.setHSL(hue * 0.3 + Math.sin(time) * 0.1, 0.8, 0.6);
-  }
-
   // Auto-rotate if not interacting
   if (!isUserInteracting) {
     targetRotation += autoRotateSpeed;
   }
 
+  // Smooth rotation interpolation
   group.rotation.y += (targetRotation - group.rotation.y) * 0.05;
 
-  // Smooth camera movement (disabled on mobile for better performance)
-  if (!isMobile) {
-    const targetCameraX = mouseX * 30;
-    const targetCameraY = 150 - mouseY * 20;
-    camera.position.x += (targetCameraX - camera.position.x) * 0.02;
-    camera.position.y += (targetCameraY - camera.position.y) * 0.02;
-  }
-
-  camera.lookAt(cameraTarget);
-
-  // Render with post-processing
-  composer.render();
+  // Render scene
+  renderer.render(scene, camera);
 }
 </script>
 
