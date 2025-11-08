@@ -63,7 +63,7 @@ const bevelEnabled = false; // Disabled (bevels are expensive)
 const depth = 6; // Moderate depth for visual appeal
 const size = 52; // 25% larger to better fill space
 const hover = 30;
-const curveSegments = 1; // Minimal curves maintains smooth appearance
+const curveSegments = 1; // Minimal curves maintain smooth appearance
 const bevelThickness = 0; // Not used
 const bevelSize = 0; // Not used
 
@@ -378,11 +378,6 @@ function onWindowResize() {
 function onPointerDown(event) {
   if (event.isPrimary === false) return;
 
-  // Prevent default touch behavior on mobile to avoid page scrolling
-  if (isMobile && event.type === 'pointerdown') {
-    event.preventDefault();
-  }
-
   isUserInteracting = true;
   if (autoRotateTimeout) {
     clearTimeout(autoRotateTimeout);
@@ -395,21 +390,10 @@ function onPointerDown(event) {
 
   document.addEventListener('pointermove', onPointerMove);
   document.addEventListener('pointerup', onPointerUp);
-
-  // Add touch-specific event listeners for better mobile support
-  if (isMobile) {
-    document.addEventListener('touchmove', onPointerMove, { passive: false });
-    document.addEventListener('touchend', onPointerUp);
-  }
 }
 
 function onPointerMove(event) {
   if (event.isPrimary === false) return;
-
-  // Prevent default on touch to avoid scrolling
-  if (isMobile && event.type === 'touchmove') {
-    event.preventDefault();
-  }
 
   const rect = container.getBoundingClientRect();
   pointerX = event.clientX - (rect.left + rect.width / 2);
@@ -423,12 +407,6 @@ function onPointerUp(event) {
 
   document.removeEventListener('pointermove', onPointerMove);
   document.removeEventListener('pointerup', onPointerUp);
-
-  // Remove touch-specific event listeners
-  if (isMobile) {
-    document.removeEventListener('touchmove', onPointerMove);
-    document.removeEventListener('touchend', onPointerUp);
-  }
 
   // Resume auto-rotation after delay
   autoRotateTimeout = setTimeout(() => {
