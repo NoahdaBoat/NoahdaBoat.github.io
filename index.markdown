@@ -66,7 +66,6 @@ const hover = 30;
 const curveSegments = 1; // Minimal curves maintains smooth appearance
 const bevelThickness = 0; // Not used
 const bevelSize = 0; // Not used
-const mirror = false; // Single mesh for best performance
 
 // Get current theme
 function getCurrentTheme() {
@@ -91,8 +90,8 @@ function updateThemeColors() {
   if (particleSystem && particles) {
     const colorArray = particles.attributes.color.array;
     const count = colorArray.length / 3;
-    const hex1 = theme === 'dark' ? 0x8b5cf6 : 0x7dd3fc;
-    const hex2 = theme === 'dark' ? 0x22d3ee : 0x3b82f6;
+    const hex1 = themeColors[theme].side;
+    const hex2 = themeColors[theme].pointLight;
     const color1 = new THREE.Color(hex1);
     const color2 = new THREE.Color(hex2);
     const tempColor = new THREE.Color();
@@ -143,8 +142,8 @@ function createParticles() {
   }
 
   const theme = getCurrentTheme();
-  const hex1 = theme === 'dark' ? 0x8b5cf6 : 0x7dd3fc;
-  const hex2 = theme === 'dark' ? 0x22d3ee : 0x3b82f6;
+  const hex1 = themeColors[theme].side;
+  const hex2 = themeColors[theme].pointLight;
   const color1 = new THREE.Color(hex1);
   const color2 = new THREE.Color(hex2);
   const tempColor = new THREE.Color();
@@ -326,17 +325,6 @@ function init() {
         textMesh1.rotation.y = Math.PI * 2;
         group.add(textMesh1);
         console.log('[Three.js] Text mesh 1 created and added to group');
-
-        if (mirror) {
-          textMesh2 = new THREE.Mesh(textGeo, materials);
-          textMesh2.position.x = centerOffsetX;
-          textMesh2.position.y = centerOffsetY - hover;
-          textMesh2.position.z = depth;
-          textMesh2.rotation.x = Math.PI;
-          textMesh2.rotation.y = Math.PI * 2;
-          group.add(textMesh2);
-          console.log('[Three.js] Text mesh 2 (mirror) created and added to group');
-        }
       } catch (error) {
         console.error('[Three.js] Error creating text geometry:', error);
       }
@@ -347,7 +335,7 @@ function init() {
   // RENDERER - Optimized for stable 60 FPS
     renderer = new THREE.WebGLRenderer({
       antialias: false, // Disabled for performance
-      alpha: false, // Keep disabled for performance
+      alpha: true, // Enable transparency for gradient background
       powerPreference: isMobile ? 'low-power' : 'default'
     });
     // Optimized resolution for consistent 60 FPS: 70% on desktop, 85% on mobile
