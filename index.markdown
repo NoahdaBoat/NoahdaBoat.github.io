@@ -39,9 +39,13 @@ let autoRotateTimeout = null;
 const autoRotateSpeed = 0.01;
 const autoRotateDelay = 2000; // 2 seconds
 
-// Detect mobile devices
-const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-  || window.innerWidth < 768;
+// Responsive mobile detection using matchMedia
+let isMobile = window.matchMedia('(max-width: 767px)').matches;
+
+// Update isMobile on viewport resize/orientation change
+window.matchMedia('(max-width: 767px)').addEventListener('change', (e) => {
+  isMobile = e.matches;
+});
 
 // Theme colors
 const themeColors = {
@@ -127,6 +131,11 @@ const observer = new MutationObserver((mutations) => {
 observer.observe(document.documentElement, {
   attributes: true,
   attributeFilter: ['data-theme']
+});
+
+// Disconnect the observer when the page is unloaded to prevent memory leaks
+window.addEventListener('beforeunload', () => {
+  observer.disconnect();
 });
 
 // Create particle system with enhanced cosmic feel
@@ -319,7 +328,7 @@ function init() {
 
         textMesh1 = new THREE.Mesh(textGeo, materials);
         textMesh1.position.x = centerOffsetX;
-        textMesh1.position.y = centerOffsetY + hover;
+        textMesh1.position.y = centerOffsetY + hover; // Center vertically, then offset by hover amount
         textMesh1.position.z = 0;
         textMesh1.rotation.x = 0;
         textMesh1.rotation.y = Math.PI * 2;
@@ -338,8 +347,8 @@ function init() {
       alpha: true, // Enable transparency for gradient background
       powerPreference: isMobile ? 'low-power' : 'default'
     });
-    // Optimized resolution for consistent 60 FPS: 70% on desktop, 85% on mobile
-    const pixelRatio = isMobile ? Math.min(window.devicePixelRatio * 0.85, 2) : Math.min(window.devicePixelRatio * 0.7, 2);
+    // Set pixel ratio for good balance between quality and performance (capped at 1.5)
+    const pixelRatio = Math.min(window.devicePixelRatio, 1.5);
     renderer.setPixelRatio(pixelRatio);
     renderer.setSize(containerWidth, containerHeight);
     container.appendChild(renderer.domElement);
@@ -417,7 +426,7 @@ function onPointerUp(event) {
 function animate() {
   requestAnimationFrame(animate);
 
-  const time = Date.now() * 0.0005; // Time-based animation
+  const time = performance.now() * 0.0005; // Time-based animation
 
   // Auto-rotate if not interacting
   if (!isUserInteracting) {
@@ -433,8 +442,8 @@ function animate() {
     particleSystem.rotation.y = time * 0.05;
     particleSystem.rotation.x = Math.sin(time * 0.3) * 0.05;
 
-    // Gentle pulsing effect on particle size
-    const pulseScale = 1 + Math.sin(time * 2) * 0.15;
+    // Gentle pulsing effect on particle size (optimized to use uniform material property)
+    const pulseScale = 1 + Math.sin(time * 2) * 0.1;
     particleSystem.material.size = 3 * pulseScale;
   }
 
@@ -445,6 +454,7 @@ function animate() {
   }
 
   // Render scene
+  renderer.clear();
   renderer.render(scene, camera);
 }
 </script>

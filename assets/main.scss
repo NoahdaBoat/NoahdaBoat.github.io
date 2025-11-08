@@ -40,8 +40,9 @@
 body {
   background-color: var(--bg-color) !important;
   color: var(--text-color) !important;
-  // Removed transition for performance (instant theme switching)
-  font-family: "Times New Roman", Times, serif !important;
+  // Use a short transition for smoother theme switching without noticeable performance impact
+  transition: background-color 0.1s, color 0.1s;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif !important;
 }
 
 .site-header {
@@ -559,12 +560,5 @@ html {
   .page-link {
     padding: 0.5rem;
     margin: 0.25rem 0;
-  }
-
-  // Disable hover effects on touch devices
-  [data-theme="dark"] .post-list > li:hover {
-    background: transparent;
-    border-left: none;
-    padding-left: 0;
   }
 }
