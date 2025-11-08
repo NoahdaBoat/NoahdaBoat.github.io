@@ -307,69 +307,69 @@ function init() {
   scene.add(group);
   
   // Load font and create text
-    console.log('[Three.js] Loading font...');
-    const loader = new FontLoader();
-    loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function(font) {
-      console.log('[Three.js] Font loaded successfully');
-      try {
-        const textGeo = new TextGeometry(text, {
-          font: font,
-          size: size,
-          depth: depth,
-          curveSegments: curveSegments,
-          bevelThickness: bevelThickness,
-          bevelSize: bevelSize,
-          bevelEnabled: bevelEnabled
-        });
+  console.log('[Three.js] Loading font...');
+  const loader = new FontLoader();
+  loader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', function(font) {
+    console.log('[Three.js] Font loaded successfully');
+    try {
+      const textGeo = new TextGeometry(text, {
+        font: font,
+        size: size,
+        depth: depth,
+        curveSegments: curveSegments,
+        bevelThickness: bevelThickness,
+        bevelSize: bevelSize,
+        bevelEnabled: bevelEnabled
+      });
 
-        textGeo.computeBoundingBox();
-        const centerOffsetX = -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
-        const centerOffsetY = -0.5 * (textGeo.boundingBox.max.y - textGeo.boundingBox.min.y);
+      textGeo.computeBoundingBox();
+      const centerOffsetX = -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
+      const centerOffsetY = -0.5 * (textGeo.boundingBox.max.y - textGeo.boundingBox.min.y);
 
-        textMesh1 = new THREE.Mesh(textGeo, materials);
-        textMesh1.position.x = centerOffsetX;
-        textMesh1.position.y = centerOffsetY + hover; // Center vertically, then offset by hover amount
-        textMesh1.position.z = 0;
-        textMesh1.rotation.x = 0;
-        textMesh1.rotation.y = Math.PI * 2;
-        group.add(textMesh1);
-        console.log('[Three.js] Text mesh 1 created and added to group');
-      } catch (error) {
-        console.error('[Three.js] Error creating text geometry:', error);
-      }
-    }, undefined, function(error) {
-      console.error('[Three.js] Error loading font:', error);
-    });
+      textMesh1 = new THREE.Mesh(textGeo, materials);
+      textMesh1.position.x = centerOffsetX;
+      textMesh1.position.y = centerOffsetY + hover; // Center vertically, then offset by hover amount
+      textMesh1.position.z = 0;
+      textMesh1.rotation.x = 0;
+      textMesh1.rotation.y = Math.PI * 2;
+      group.add(textMesh1);
+      console.log('[Three.js] Text mesh 1 created and added to group');
+    } catch (error) {
+      console.error('[Three.js] Error creating text geometry:', error);
+    }
+  }, undefined, function(error) {
+    console.error('[Three.js] Error loading font:', error);
+  });
   
   // RENDERER - Optimized for stable 60 FPS
-    renderer = new THREE.WebGLRenderer({
-      antialias: false, // Disabled for performance
-      alpha: true, // Enable transparency for gradient background
-      powerPreference: isMobile ? 'low-power' : 'default'
-    });
-    // Set pixel ratio for good balance between quality and performance (capped at 1.5)
-    const pixelRatio = Math.min(window.devicePixelRatio, 1.5);
-    renderer.setPixelRatio(pixelRatio);
-    renderer.setSize(containerWidth, containerHeight);
-    container.appendChild(renderer.domElement);
-    console.log('[Three.js] Renderer created for 60 FPS performance');
+  renderer = new THREE.WebGLRenderer({
+    antialias: false, // Disabled for performance
+    alpha: true, // Enable transparency for gradient background
+    powerPreference: isMobile ? 'low-power' : 'default'
+  });
+  // Set pixel ratio for good balance between quality and performance (capped at 1.5)
+  const pixelRatio = Math.min(window.devicePixelRatio, 1.5);
+  renderer.setPixelRatio(pixelRatio);
+  renderer.setSize(containerWidth, containerHeight);
+  container.appendChild(renderer.domElement);
+  console.log('[Three.js] Renderer created for 60 FPS performance');
 
-    // Create particle system (moderate count for quality)
-    createParticles();
-    console.log('[Three.js] Particle system created');
+  // Create particle system (moderate count for quality)
+  createParticles();
+  console.log('[Three.js] Particle system created');
 
-    // Create cosmic starfield background
-    createStarfield();
-    console.log('[Three.js] Starfield created');
+  // Create cosmic starfield background
+  createStarfield();
+  console.log('[Three.js] Starfield created');
 
-    // EVENTS
-    container.style.touchAction = 'none';
-    container.addEventListener('pointerdown', onPointerDown);
-    // Note: onPointerMove is added dynamically during drag in onPointerDown
+  // EVENTS
+  container.style.touchAction = 'none';
+  container.addEventListener('pointerdown', onPointerDown);
+  // Note: onPointerMove is added dynamically during drag in onPointerDown
 
-    window.addEventListener('resize', onWindowResize);
-    console.log('[Three.js] Event listeners attached');
-    console.log('[Three.js] Initialization complete!');
+  window.addEventListener('resize', onWindowResize);
+  console.log('[Three.js] Event listeners attached');
+  console.log('[Three.js] Initialization complete!');
 
   } catch (error) {
     console.error('[Three.js] Initialization error:', error);
