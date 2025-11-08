@@ -63,7 +63,7 @@ const themeColors = {
 
 const text = "{{ site.title | replace: "'", "\\'" }}";
 // Optimized geometry settings for 60 FPS performance with good quality
-const bevelEnabled = false; // Disabled (bevels are expensive)
+const bevelEnabled = false; // Bevels disabled for performance (expensive to render)
 const depth = 6; // Moderate depth for visual appeal
 const size = 52; // 25% larger to better fill space
 const hover = 30;
