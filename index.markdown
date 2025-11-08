@@ -29,6 +29,7 @@ let group, textMesh1, pointLight;
 let materials = [];
 let particles, particleSystem;
 let particleMixRatios = []; // Store consistent mix ratios for particle colors
+let starfield; // Static background stars for cosmic effect
 let targetRotation = 0;
 let targetRotationOnPointerDown = 0;
 let pointerX = 0;
@@ -60,7 +61,7 @@ const text = "{{ site.title | replace: "'", "\\'" }}";
 // Optimized geometry settings for 60 FPS performance with good quality
 const bevelEnabled = false; // Disabled (bevels are expensive)
 const depth = 6; // Moderate depth for visual appeal
-const size = 45; // Good visual size with performance
+const size = 52; // 25% larger to better fill space
 const hover = 30;
 const curveSegments = 1; // Minimal curves maintains smooth appearance
 const bevelThickness = 0; // Not used
@@ -107,6 +108,9 @@ function updateThemeColors() {
 
     particles.attributes.color.needsUpdate = true;
   }
+
+  // Update starfield colors
+  updateStarfieldColors();
 }
 
 init();
@@ -126,9 +130,9 @@ observer.observe(document.documentElement, {
   attributeFilter: ['data-theme']
 });
 
-// Create particle system with minimal count for stable 60 FPS
+// Create particle system with enhanced cosmic feel
 function createParticles() {
-  const particleCount = isMobile ? 12 : 20;
+  const particleCount = isMobile ? 18 : 30;
   const positions = new Float32Array(particleCount * 3);
   const colors = new Float32Array(particleCount * 3);
 
@@ -167,15 +171,85 @@ function createParticles() {
   particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
   const particleMaterial = new THREE.PointsMaterial({
-    size: 2,
+    size: 3,
     vertexColors: true,
-    transparent: false, // No transparency for performance
-    blending: THREE.NormalBlending,
+    transparent: true,
+    opacity: 0.8,
+    blending: THREE.AdditiveBlending, // Cosmic glow effect
     sizeAttenuation: true
   });
 
   particleSystem = new THREE.Points(particles, particleMaterial);
   scene.add(particleSystem);
+}
+
+// Create a cosmic starfield background
+function createStarfield() {
+  const starCount = isMobile ? 100 : 200;
+  const starPositions = new Float32Array(starCount * 3);
+  const starColors = new Float32Array(starCount * 3);
+
+  const theme = getCurrentTheme();
+  const baseColor = new THREE.Color(theme === 'dark' ? 0xa78bfa : 0x7dd3fc);
+  const accentColor = new THREE.Color(theme === 'dark' ? 0x22d3ee : 0x60a5fa);
+  const tempColor = new THREE.Color();
+
+  for (let i = 0; i < starCount; i++) {
+    // Distribute stars in a large sphere
+    const radius = Math.random() * 1200 + 600;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.random() * Math.PI;
+
+    starPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+    starPositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+    starPositions[i * 3 + 2] = radius * Math.cos(phi);
+
+    // Subtle color variation
+    const mixRatio = Math.random();
+    tempColor.copy(baseColor).lerp(accentColor, mixRatio);
+    starColors[i * 3] = tempColor.r;
+    starColors[i * 3 + 1] = tempColor.g;
+    starColors[i * 3 + 2] = tempColor.b;
+  }
+
+  const starGeometry = new THREE.BufferGeometry();
+  starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+  starGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+  const starMaterial = new THREE.PointsMaterial({
+    size: 1,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.6,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true
+  });
+
+  starfield = new THREE.Points(starGeometry, starMaterial);
+  scene.add(starfield);
+}
+
+// Update starfield colors on theme change
+function updateStarfieldColors() {
+  if (!starfield) return;
+
+  const theme = getCurrentTheme();
+  const baseColor = new THREE.Color(theme === 'dark' ? 0xa78bfa : 0x7dd3fc);
+  const accentColor = new THREE.Color(theme === 'dark' ? 0x22d3ee : 0x60a5fa);
+  const tempColor = new THREE.Color();
+
+  const colorArray = starfield.geometry.attributes.color.array;
+  const count = colorArray.length / 3;
+
+  for (let i = 0; i < count; i++) {
+    const mixRatio = Math.random();
+    tempColor.copy(baseColor).lerp(accentColor, mixRatio);
+    colorArray[i * 3] = tempColor.r;
+    colorArray[i * 3 + 1] = tempColor.g;
+    colorArray[i * 3 + 2] = tempColor.b;
+  }
+
+  starfield.geometry.attributes.color.needsUpdate = true;
 }
 
 function init() {
@@ -188,8 +262,10 @@ function init() {
       return;
     }
 
-    // CAMERA
-    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000);
+    // CAMERA - use container dimensions instead of window
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    camera = new THREE.PerspectiveCamera(60, containerWidth / containerHeight, 1, 2000);
     camera.position.set(0, 150, 700);
     cameraTarget = new THREE.Vector3(0, 100, 0);
     camera.lookAt(cameraTarget); // Set once here instead of every frame
@@ -239,11 +315,12 @@ function init() {
         });
 
         textGeo.computeBoundingBox();
-        const centerOffset = -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
+        const centerOffsetX = -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
+        const centerOffsetY = -0.5 * (textGeo.boundingBox.max.y - textGeo.boundingBox.min.y);
 
         textMesh1 = new THREE.Mesh(textGeo, materials);
-        textMesh1.position.x = centerOffset;
-        textMesh1.position.y = hover;
+        textMesh1.position.x = centerOffsetX;
+        textMesh1.position.y = centerOffsetY + hover;
         textMesh1.position.z = 0;
         textMesh1.rotation.x = 0;
         textMesh1.rotation.y = Math.PI * 2;
@@ -252,8 +329,8 @@ function init() {
 
         if (mirror) {
           textMesh2 = new THREE.Mesh(textGeo, materials);
-          textMesh2.position.x = centerOffset;
-          textMesh2.position.y = -hover;
+          textMesh2.position.x = centerOffsetX;
+          textMesh2.position.y = centerOffsetY - hover;
           textMesh2.position.z = depth;
           textMesh2.rotation.x = Math.PI;
           textMesh2.rotation.y = Math.PI * 2;
@@ -276,13 +353,17 @@ function init() {
     // Optimized resolution for consistent 60 FPS: 70% on desktop, 85% on mobile
     const pixelRatio = isMobile ? Math.min(window.devicePixelRatio * 0.85, 2) : Math.min(window.devicePixelRatio * 0.7, 2);
     renderer.setPixelRatio(pixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(containerWidth, containerHeight);
     container.appendChild(renderer.domElement);
     console.log('[Three.js] Renderer created for 60 FPS performance');
 
     // Create particle system (moderate count for quality)
     createParticles();
     console.log('[Three.js] Particle system created');
+
+    // Create cosmic starfield background
+    createStarfield();
+    console.log('[Three.js] Starfield created');
 
     // EVENTS
     container.style.touchAction = 'none';
@@ -299,10 +380,11 @@ function init() {
 }
 
 function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  const containerWidth = container.clientWidth;
+  const containerHeight = container.clientHeight;
+  camera.aspect = containerWidth / containerHeight;
   camera.updateProjectionMatrix();
-  // Full resolution
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(containerWidth, containerHeight);
 }
 
 function onPointerDown(event) {
@@ -319,7 +401,8 @@ function onPointerDown(event) {
     autoRotateTimeout = null;
   }
 
-  pointerXOnPointerDown = event.clientX - window.innerWidth / 2;
+  const rect = container.getBoundingClientRect();
+  pointerXOnPointerDown = event.clientX - (rect.left + rect.width / 2);
   targetRotationOnPointerDown = targetRotation;
 
   document.addEventListener('pointermove', onPointerMove);
@@ -340,7 +423,8 @@ function onPointerMove(event) {
     event.preventDefault();
   }
 
-  pointerX = event.clientX - window.innerWidth / 2;
+  const rect = container.getBoundingClientRect();
+  pointerX = event.clientX - (rect.left + rect.width / 2);
   // Increase sensitivity on mobile for easier rotation
   const sensitivity = isMobile ? 0.03 : 0.02;
   targetRotation = targetRotationOnPointerDown + (pointerX - pointerXOnPointerDown) * sensitivity;
@@ -367,6 +451,8 @@ function onPointerUp(event) {
 function animate() {
   requestAnimationFrame(animate);
 
+  const time = Date.now() * 0.0005; // Time-based animation
+
   // Auto-rotate if not interacting
   if (!isUserInteracting) {
     targetRotation += autoRotateSpeed;
@@ -375,36 +461,24 @@ function animate() {
   // Smooth rotation interpolation
   group.rotation.y += (targetRotation - group.rotation.y) * 0.05;
 
+  // Cosmic particle effects
+  if (particleSystem) {
+    // Subtle floating movement
+    particleSystem.rotation.y = time * 0.05;
+    particleSystem.rotation.x = Math.sin(time * 0.3) * 0.05;
+
+    // Gentle pulsing effect on particle size
+    const pulseScale = 1 + Math.sin(time * 2) * 0.15;
+    particleSystem.material.size = 3 * pulseScale;
+  }
+
+  // Very subtle starfield rotation for depth
+  if (starfield) {
+    starfield.rotation.y = time * 0.02;
+    starfield.rotation.x = time * 0.01;
+  }
+
   // Render scene
   renderer.render(scene, camera);
 }
 </script>
-
-<style>
-.threejs-hero {
-  position: relative;
-  width: 100vw;
-  height: 70vh;
-  min-height: 400px;
-  overflow: hidden;
-  margin-bottom: 2rem;
-  margin-left: calc(-50vw + 50%);
-  margin-right: calc(-50vw + 50%);
-}
-
-#threejs-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-}
-
-@media (max-width: 768px) {
-  .threejs-hero {
-    height: 50vh;
-    min-height: 300px;
-  }
-}
-</style>
