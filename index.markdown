@@ -65,7 +65,7 @@ const text = "{{ site.title | replace: "'", "\\'" }}";
 // Optimized geometry settings for 60 FPS performance with good quality
 const bevelEnabled = false; // Bevels disabled for performance (expensive to render)
 const depth = 6; // Moderate depth for visual appeal
-const size = 52; // 25% larger to better fill space
+const size = 52;
 const hover = 30;
 const curveSegments = 1; // Minimal curves maintain smooth appearance
 const bevelThickness = 0; // Not used
