@@ -2,7 +2,7 @@
 
 import * as Store from '../store.js';
 import * as Router from '../router.js';
-import { today, calcHoursSlept, clamp, generateId } from '../utils.js';
+import { today, clamp, generateId } from '../utils.js';
 import { createRatingPicker } from '../components/rating-picker.js';
 
 export function renderSleepForm({ id } = {}) {
@@ -22,18 +22,14 @@ export function renderSleepForm({ id } = {}) {
     alarmSetTime: existing?.alarmSetTime ?? '07:00',
     alarmSnoozeCount: existing?.alarmSnoozeCount ?? 0,
     feltTired: existing?.timeFeltTired != null,
-    timeFeltTired: existing?.timeFeltTired ?? '14:00',
+    timeFeltTiredList: existing?.timeFeltTired
+      ? (Array.isArray(existing.timeFeltTired) ? existing.timeFeltTired : [existing.timeFeltTired])
+      : ['14:00'],
     hasCommuteTime: existing?.commuteTimeHome != null,
     commuteTimeHome: existing?.commuteTimeHome ?? 30,
     hasTimeGotHome: existing?.timeGotHome != null,
     timeGotHome: existing?.timeGotHome ?? '17:30',
   };
-
-  function recomputeHours() {
-    state.hoursSlept = calcHoursSlept(state.sleepStartTime, state.sleepEndTime);
-    const el = container.querySelector('#hours-slept-display');
-    if (el) el.textContent = `${state.hoursSlept.toFixed(1)} hrs`;
-  }
 
   function save() {
     const entry = {
@@ -46,7 +42,7 @@ export function renderSleepForm({ id } = {}) {
       productivityRating: state.productivityRating,
       dayFeltDifficulty: state.dayFeltDifficulty,
       dayFeltSpeed: state.dayFeltSpeed,
-      timeFeltTired: state.feltTired ? state.timeFeltTired : null,
+      timeFeltTired: state.feltTired ? state.timeFeltTiredList.filter(t => t) : null,
       commuteTimeHome: state.hasCommuteTime ? state.commuteTimeHome : null,
       alarmSetTime: state.hasAlarm ? state.alarmSetTime : null,
       alarmSnoozeCount: state.hasAlarm ? state.alarmSnoozeCount : null,
@@ -103,16 +99,15 @@ export function renderSleepForm({ id } = {}) {
     if (!existing) checkDuplicate(container, val);
   })));
   detailsCard.appendChild(formRow('Sleep Start', inputEl('time', state.sleepStartTime, val => {
-    state.sleepStartTime = val; recomputeHours();
+    state.sleepStartTime = val;
   })));
   detailsCard.appendChild(formRow('Sleep End', inputEl('time', state.sleepEndTime, val => {
-    state.sleepEndTime = val; recomputeHours();
+    state.sleepEndTime = val;
   })));
-
-  const hoursRow = document.createElement('div');
-  hoursRow.className = 'form-row';
-  hoursRow.innerHTML = `<span class="form-label">Hours Slept</span><span class="form-value" id="hours-slept-display">${state.hoursSlept.toFixed(1)} hrs</span>`;
-  detailsCard.appendChild(hoursRow);
+  detailsCard.appendChild(stepperRow('Hours Slept', state.hoursSlept, 0, 24, 0.5,
+    val => { state.hoursSlept = val; },
+    v => `${v.toFixed(1)} hrs`
+  ));
   container.appendChild(detailsCard);
 
   // ── Alarm
@@ -137,10 +132,10 @@ export function renderSleepForm({ id } = {}) {
   container.appendChild(sectionTitle('Ratings'));
   const ratingsCard = document.createElement('div');
   ratingsCard.className = 'form-card';
-  ratingsCard.appendChild(createRatingPicker('Sleep Quality', state.sleepQuality, v => { state.sleepQuality = v; }));
-  ratingsCard.appendChild(createRatingPicker('Productivity Rating', state.productivityRating, v => { state.productivityRating = v; }));
-  ratingsCard.appendChild(createRatingPicker('Day Felt Difficulty', state.dayFeltDifficulty, v => { state.dayFeltDifficulty = v; }));
-  ratingsCard.appendChild(createRatingPicker('Day Felt Speed', state.dayFeltSpeed, v => { state.dayFeltSpeed = v; }));
+  ratingsCard.appendChild(createRatingPicker('Sleep Quality', state.sleepQuality, v => { state.sleepQuality = v; }, { lowLabel: 'Poor', highLabel: 'Excellent' }));
+  ratingsCard.appendChild(createRatingPicker('Productivity Rating', state.productivityRating, v => { state.productivityRating = v; }, { lowLabel: 'Not productive', highLabel: 'Very productive' }));
+  ratingsCard.appendChild(createRatingPicker('Day Felt Difficulty', state.dayFeltDifficulty, v => { state.dayFeltDifficulty = v; }, { lowLabel: 'Easy', highLabel: 'Very hard' }));
+  ratingsCard.appendChild(createRatingPicker('Day Felt Speed', state.dayFeltSpeed, v => { state.dayFeltSpeed = v; }, { lowLabel: 'Dragged on', highLabel: 'Flew by' }));
   container.appendChild(ratingsCard);
 
   // ── Additional Info
@@ -150,7 +145,61 @@ export function renderSleepForm({ id } = {}) {
 
   const tiredDetails = document.createElement('div');
   tiredDetails.classList.toggle('hidden', !state.feltTired);
-  tiredDetails.appendChild(formRow('Time Felt Tired', inputEl('time', state.timeFeltTired, val => { state.timeFeltTired = val; })));
+
+  function renderTiredInputs() {
+    tiredDetails.innerHTML = '';
+    state.timeFeltTiredList.forEach((time, idx) => {
+      const row = document.createElement('div');
+      row.className = 'form-row';
+
+      const lbl = document.createElement('span');
+      lbl.className = 'form-label';
+      lbl.textContent = state.timeFeltTiredList.length > 1 ? `Time #${idx + 1}` : 'Time Felt Tired';
+
+      const rightSide = document.createElement('div');
+      rightSide.style.display = 'flex';
+      rightSide.style.alignItems = 'center';
+      rightSide.style.gap = '8px';
+
+      const input = document.createElement('input');
+      input.type = 'time';
+      input.value = time;
+      input.className = 'form-input';
+      input.addEventListener('change', () => { state.timeFeltTiredList[idx] = input.value; });
+      rightSide.appendChild(input);
+
+      if (state.timeFeltTiredList.length > 1) {
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'tired-remove-btn';
+        removeBtn.textContent = '\u2212';
+        removeBtn.addEventListener('click', () => {
+          state.timeFeltTiredList.splice(idx, 1);
+          renderTiredInputs();
+        });
+        rightSide.appendChild(removeBtn);
+      }
+
+      row.appendChild(lbl);
+      row.appendChild(rightSide);
+      tiredDetails.appendChild(row);
+    });
+
+    const addRow = document.createElement('div');
+    addRow.className = 'form-row';
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'btn-text';
+    addBtn.textContent = '+ Add Another Time';
+    addBtn.addEventListener('click', () => {
+      state.timeFeltTiredList.push('14:00');
+      renderTiredInputs();
+    });
+    addRow.appendChild(addBtn);
+    tiredDetails.appendChild(addRow);
+  }
+
+  renderTiredInputs();
 
   const commuteDetails = document.createElement('div');
   commuteDetails.classList.toggle('hidden', !state.hasCommuteTime);
@@ -273,7 +322,7 @@ function stepperRow(label, initialValue, min, max, step, onChange, formatVal) {
   plusBtn.textContent = '+';
 
   function update(newVal) {
-    value = clamp(newVal, min, max);
+    value = clamp(Math.round(newVal * 10) / 10, min, max);
     display.textContent = formatVal(value);
     minusBtn.disabled = value <= min;
     plusBtn.disabled = value >= max;

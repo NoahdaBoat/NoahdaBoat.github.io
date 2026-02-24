@@ -30,7 +30,13 @@ export function renderTrends() {
     segmented.querySelectorAll('.segmented-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.tab === tabId);
     });
-    // Clear previous Chart.js canvases entirely to avoid reuse errors
+    // Destroy existing Chart.js instances before removing canvases
+    chartArea.querySelectorAll('canvas').forEach(c => {
+      if (c._chartInstance) {
+        c._chartInstance.destroy();
+        c._chartInstance = null;
+      }
+    });
     chartArea.innerHTML = '';
     if (tabId === 'sleep')    renderSleepCharts(chartArea);
     if (tabId === 'screens')  renderScreenChart(chartArea);

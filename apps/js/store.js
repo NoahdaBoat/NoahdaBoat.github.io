@@ -141,7 +141,9 @@ export const csvExport = {
       na(e.dayFeltSpeed),
       e.alarmSetTime ? formatTime(e.alarmSetTime) : 'N/A',
       na(e.alarmSnoozeCount),
-      e.timeFeltTired ? formatTime(e.timeFeltTired) : 'N/A',
+      e.timeFeltTired
+        ? (Array.isArray(e.timeFeltTired) ? e.timeFeltTired.map(t => formatTime(t)).join('; ') : formatTime(e.timeFeltTired))
+        : 'N/A',
       e.commuteTimeHome !== null && e.commuteTimeHome !== undefined ? Math.round(e.commuteTimeHome) : 'N/A',
       e.timeGotHome ? formatTime(e.timeGotHome) : 'N/A'
     ].join(','));

@@ -21,10 +21,6 @@ export function renderSleepCharts(container) {
   const chartLabels = entries.map(e => formatChartDate(e.date));
 
   // ── Hours Slept chart
-  const hoursBox = chartBox('Hours Slept');
-  const hoursDetail = detailPanel();
-  hoursBox.wrap.parentElement?.appendChild(hoursDetail); // appended below in order
-
   container.appendChild(buildChartContainer('Hours Slept', canvas => {
     return new Chart(canvas, {
       type: 'line',
@@ -274,7 +270,9 @@ function buildChartContainer(title, createChart) {
   box.appendChild(hint);
 
   // Create the chart after the canvas is in the DOM tree
-  requestAnimationFrame(() => createChart(canvas));
+  requestAnimationFrame(() => {
+    canvas._chartInstance = createChart(canvas);
+  });
 
   return box;
 }

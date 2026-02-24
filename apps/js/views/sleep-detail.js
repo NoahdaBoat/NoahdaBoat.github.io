@@ -80,7 +80,14 @@ export function renderSleepDetail({ id }) {
     container.appendChild(sectionTitle('Additional Info'));
     const addCard = document.createElement('div');
     addCard.className = 'detail-card';
-    if (entry.timeFeltTired) addRow(addCard, 'Time Felt Tired', formatTime(entry.timeFeltTired));
+    if (entry.timeFeltTired) {
+      const times = Array.isArray(entry.timeFeltTired) ? entry.timeFeltTired : [entry.timeFeltTired];
+      if (times.length === 1) {
+        addRow(addCard, 'Time Felt Tired', formatTime(times[0]));
+      } else {
+        times.forEach((t, i) => addRow(addCard, `Time Felt Tired #${i + 1}`, formatTime(t)));
+      }
+    }
     if (entry.commuteTimeHome != null) addRow(addCard, 'Commute Home', `${Math.round(entry.commuteTimeHome)} min`);
     if (entry.timeGotHome) addRow(addCard, 'Time Got Home', formatTime(entry.timeGotHome));
     container.appendChild(addCard);

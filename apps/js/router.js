@@ -52,10 +52,7 @@ export function init() {
     btn.addEventListener('click', () => navigate(btn.dataset.tab));
   });
 
-  // Close modal on overlay background click
-  document.getElementById('modal-overlay').addEventListener('click', e => {
-    if (e.target === e.currentTarget) closeModal();
-  });
+  // Modal closes only via Cancel/Done buttons (not overlay click)
 
   window.addEventListener('hashchange', handleHash);
   handleHash();

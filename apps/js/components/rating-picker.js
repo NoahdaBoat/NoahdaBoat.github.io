@@ -1,6 +1,6 @@
 // rating-picker.js — Reusable 1-5 circular button rating picker
 
-export function createRatingPicker(label, value, onChange) {
+export function createRatingPicker(label, value, onChange, { lowLabel, highLabel } = {}) {
   const row = document.createElement('div');
   row.className = 'rating-row';
 
@@ -28,5 +28,18 @@ export function createRatingPicker(label, value, onChange) {
   }
 
   row.appendChild(picker);
+
+  if (lowLabel || highLabel) {
+    const hints = document.createElement('div');
+    hints.className = 'rating-hints';
+    const low = document.createElement('span');
+    low.textContent = lowLabel || '';
+    const high = document.createElement('span');
+    high.textContent = highLabel || '';
+    hints.appendChild(low);
+    hints.appendChild(high);
+    row.appendChild(hints);
+  }
+
   return row;
 }
