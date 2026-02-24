@@ -268,7 +268,7 @@ blockquote {
   font-size: 14px;
   color: var(--text-color);
   transition: all 0.3s ease;
-  z-index: 1000;
+  z-index: 50;
 }
 
 .theme-toggle:hover {
@@ -444,8 +444,8 @@ html {
   color: var(--accent-secondary);
 }
 
-// Wrapper improvements
-[data-theme="dark"] .wrapper {
+// Wrapper improvements (exclude header and footer wrappers)
+[data-theme="dark"] .page-content .wrapper {
   background: rgba(139, 92, 246, 0.02);
   border-radius: 12px;
   padding: 2rem;
@@ -503,13 +503,83 @@ html {
   color: white;
 }
 
-// Ensure mobile nav dropdown sits above the three.js hero
+// Ensure mobile nav + dropdown sits above the three.js hero
 .site-nav {
   z-index: 200;
+
+  // Make hamburger icon visible in both themes
+  .menu-icon > svg path {
+    fill: var(--text-color) !important;
+  }
+
+  // Mobile dropdown: solid background, above three.js
+  .trigger {
+    z-index: 200;
+  }
 }
 
-.site-nav .trigger {
-  z-index: 200;
+@media screen and (max-width: 600px) {
+  // Keep minima's default layout but theme the background
+  .site-nav {
+    background-color: var(--header-bg) !important;
+    border: none !important;
+  }
+
+  // Theme toggle: float right beside the hamburger, aligned to same line
+  .site-nav .theme-toggle {
+    float: right !important;
+    position: static !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 9px 5px;
+    margin: 0 !important;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  // Hamburger label — no border
+  .site-nav label[for="nav-trigger"] {
+    background-color: transparent !important;
+    border: none !important;
+  }
+
+  // Expanded dropdown panel
+  .site-nav .trigger {
+    background-color: var(--header-bg) !important;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: var(--shadow-md);
+    padding: 8px 0;
+  }
+
+  // Links inside the dropdown
+  .site-nav .trigger .page-link {
+    color: var(--text-color) !important;
+    background-color: transparent !important;
+    padding: 8px 16px;
+    margin: 0;
+    display: block;
+  }
+
+  // Apps dropdown: show menu inline on mobile (no hover)
+  .nav-dropdown__menu {
+    position: static !important;
+    display: none;
+    border: none !important;
+    box-shadow: none !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .nav-dropdown.open .nav-dropdown__menu {
+    display: block !important;
+  }
+
+  .nav-dropdown__item {
+    padding: 8px 16px 8px 32px !important;
+  }
 }
 
 // Mobile-specific improvements
@@ -519,14 +589,9 @@ html {
     line-height: 1.6;
   }
 
-  // Move theme toggle below the header so it doesn't overlap the hamburger
+  // Theme toggle: static in header, not fixed
   .theme-toggle {
-    top: auto;
-    bottom: 20px;
-    right: 20px;
-    top: unset;
-    padding: 6px 12px;
-    font-size: 12px;
+    position: static;
   }
 
   // Better heading sizes on mobile
@@ -624,9 +689,8 @@ html {
   }
 
   .theme-toggle {
-    padding: 10px 18px;
-    min-width: 60px;
-    min-height: 44px; // Apple's recommended minimum touch target
+    min-width: 44px;
+    min-height: 36px; // Touch-friendly tap target
   }
 
   .page-link {
