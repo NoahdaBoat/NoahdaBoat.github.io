@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Sleep &amp; Screens</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Back to site -->
+  <a href="/" class="back-home">← Home</a>
+
+  <!-- Main content area -->
+  <main id="view" class="view"></main>
+
+  <!-- Modal overlay -->
+  <div id="modal-overlay" class="modal-overlay hidden" aria-modal="true" role="dialog">
+    <div id="modal-content" class="modal-content"></div>
+  </div>
+
+  <!-- Bottom tab bar -->
+  <nav class="tab-bar" role="tablist">
+    <button class="tab-item" data-tab="sleep" role="tab" aria-label="Sleep">
+      <span class="tab-icon">🌙</span>
+      <span class="tab-label">Sleep</span>
+    </button>
+    <button class="tab-item" data-tab="screens" role="tab" aria-label="Screens">
+      <span class="tab-icon">📱</span>
+      <span class="tab-label">Screens</span>
+    </button>
+    <button class="tab-item" data-tab="trends" role="tab" aria-label="Trends">
+      <span class="tab-icon">📈</span>
+      <span class="tab-label">Trends</span>
+    </button>
+    <button class="tab-item" data-tab="settings" role="tab" aria-label="Settings">
+      <span class="tab-icon">⚙️</span>
+      <span class="tab-label">Settings</span>
+    </button>
+  </nav>
+
+  <!-- CDN: Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <!-- App entry point -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -64,6 +64,65 @@ body {
   color: var(--text-color);
 }
 
+// Apps dropdown in nav
+.nav-dropdown {
+  display: inline-block;
+  position: relative;
+
+  &__toggle {
+    cursor: pointer;
+    user-select: none;
+    color: var(--link-color) !important;
+  }
+
+  &__menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin: 0;
+    padding: 0.25rem 0;
+    list-style: none;
+    background-color: var(--header-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: var(--shadow-md);
+    min-width: 160px;
+    z-index: 100;
+  }
+
+  &:hover &__menu {
+    display: block;
+  }
+
+  &__item {
+    display: block;
+    padding: 0.4rem 1rem;
+    color: var(--text-color) !important;
+    text-decoration: none !important;
+    white-space: nowrap;
+
+    &:hover {
+      background-color: var(--border-color);
+      color: var(--text-color) !important;
+      text-shadow: none !important;
+    }
+  }
+}
+
+[data-theme="dark"] .nav-dropdown__menu {
+  background-color: var(--header-bg);
+  border-color: var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+
+// Force dropdown item colour to match .page-link, overriding the global `a` rule
+.nav-dropdown__menu a.nav-dropdown__item,
+.nav-dropdown__menu a.nav-dropdown__item:visited,
+.nav-dropdown__menu a.nav-dropdown__item:hover {
+  color: var(--text-color) !important;
+}
+
 a {
   color: var(--link-color) !important;
   text-decoration: none;
