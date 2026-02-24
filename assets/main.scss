@@ -49,6 +49,8 @@ body {
   background-color: var(--header-bg);
   border-bottom: 1px solid var(--border-color);
   transition: all 0.3s ease;
+  position: relative;
+  z-index: 200;
 }
 
 [data-theme="dark"] .site-header {
@@ -501,6 +503,15 @@ html {
   color: white;
 }
 
+// Ensure mobile nav dropdown sits above the three.js hero
+.site-nav {
+  z-index: 200;
+}
+
+.site-nav .trigger {
+  z-index: 200;
+}
+
 // Mobile-specific improvements
 @media (max-width: 768px) {
   body {
@@ -508,10 +519,12 @@ html {
     line-height: 1.6;
   }
 
-  // Adjust theme toggle position on mobile
+  // Move theme toggle below the header so it doesn't overlap the hamburger
   .theme-toggle {
-    top: 10px;
-    right: 10px;
+    top: auto;
+    bottom: 20px;
+    right: 20px;
+    top: unset;
     padding: 6px 12px;
     font-size: 12px;
   }
