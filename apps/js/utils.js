@@ -61,6 +61,23 @@ export function formatTime(hhmm) {
   return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
 }
 
+export function normalizeStringList(values) {
+  if (!values) return [];
+  const items = Array.isArray(values) ? values : String(values).split(',');
+  return items.map(value => String(value).trim()).filter(Boolean);
+}
+
+export function joinStringList(values, separator = ', ') {
+  return normalizeStringList(values).join(separator);
+}
+
+export function summarizeStringList(values) {
+  const items = normalizeStringList(values);
+  if (items.length === 0) return '';
+  if (items.length <= 2) return items.join(', ');
+  return `${items[0]} +${items.length - 1}`;
+}
+
 // Trigger a browser file download with CSV content
 export function downloadCSV(filename, csvString) {
   const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });

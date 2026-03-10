@@ -2,7 +2,7 @@
 
 import * as Store from '../store.js';
 import * as Router from '../router.js';
-import { formatDate, formatTime } from '../utils.js';
+import { formatDate, formatTime, summarizeStringList } from '../utils.js';
 
 export function renderScreenList() {
   const container = document.createElement('div');
@@ -54,7 +54,12 @@ function createRow(entry) {
 
   const subtitle = document.createElement('div');
   subtitle.className = 'card-row-subtitle';
-  subtitle.textContent = `${entry.hoursUsed.toFixed(1)} hrs · Last used ${formatTime(entry.lastUsedTime)}`;
+  const typeSummary = summarizeStringList(entry.screenTypes);
+  subtitle.textContent = [
+    `${entry.hoursUsed.toFixed(1)} hrs`,
+    typeSummary || null,
+    `Last used ${formatTime(entry.lastUsedTime)}`
+  ].filter(Boolean).join(' · ');
 
   content.appendChild(title);
   content.appendChild(subtitle);

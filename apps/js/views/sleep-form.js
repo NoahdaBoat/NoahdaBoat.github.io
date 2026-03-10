@@ -11,6 +11,7 @@ export function renderSleepForm({ id } = {}) {
   // State — mirrors SleepLogView.swift init defaults
   const state = {
     date: existing?.date ?? today(),
+    targetBedtime: existing?.targetBedtime ?? '',
     sleepStartTime: existing?.sleepStartTime ?? '23:00',
     sleepEndTime: existing?.sleepEndTime ?? '07:00',
     hoursSlept: existing?.hoursSlept ?? 8.0,
@@ -35,6 +36,7 @@ export function renderSleepForm({ id } = {}) {
     const entry = {
       id: existing?.id ?? generateId(),
       date: state.date,
+      targetBedtime: state.targetBedtime || null,
       sleepStartTime: state.sleepStartTime,
       sleepEndTime: state.sleepEndTime,
       hoursSlept: state.hoursSlept,
@@ -97,6 +99,9 @@ export function renderSleepForm({ id } = {}) {
   detailsCard.appendChild(formRow('Date', inputEl('date', state.date, val => {
     state.date = val;
     if (!existing) checkDuplicate(container, val);
+  })));
+  detailsCard.appendChild(formRow('Target Bedtime', inputEl('time', state.targetBedtime, val => {
+    state.targetBedtime = val;
   })));
   detailsCard.appendChild(formRow('Sleep Start', inputEl('time', state.sleepStartTime, val => {
     state.sleepStartTime = val;

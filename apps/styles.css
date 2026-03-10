@@ -418,6 +418,30 @@ html, body {
   color: var(--accent);
 }
 
+.form-inline-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+.form-input-wide {
+  flex: 1;
+  min-width: 120px;
+  max-width: none;
+  text-align: left;
+  color: var(--text);
+  background: var(--secondary-bg);
+  border-radius: var(--border-radius-sm);
+  padding: 8px 12px;
+}
+
+.form-input-wide::placeholder {
+  color: var(--secondary-text);
+}
+
 /* Toggle switch */
 .toggle-row {
   display: flex;
@@ -735,6 +759,7 @@ html, body {
 .chart-detail-value {
   font-size: 17px;
   font-weight: 600;
+  word-break: break-word;
 }
 
 .chart-hint {

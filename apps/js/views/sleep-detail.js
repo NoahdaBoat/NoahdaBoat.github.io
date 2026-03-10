@@ -47,6 +47,7 @@ export function renderSleepDetail({ id }) {
   const detailCard = document.createElement('div');
   detailCard.className = 'detail-card';
   addRow(detailCard, 'Date', formatDate(entry.date));
+  addRow(detailCard, 'Target Bedtime', entry.targetBedtime ? formatTime(entry.targetBedtime) : '—');
   addRow(detailCard, 'Sleep Start', formatTime(entry.sleepStartTime));
   addRow(detailCard, 'Sleep End', formatTime(entry.sleepEndTime));
   addRow(detailCard, 'Hours Slept', `${entry.hoursSlept.toFixed(1)} hrs`);

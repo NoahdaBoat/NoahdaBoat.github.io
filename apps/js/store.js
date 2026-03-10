@@ -1,6 +1,6 @@
 // store.js — localStorage CRUD for sleep/screen entries + settings + CSV export
 
-import { generateId, formatDate, formatTime, downloadCSV } from './utils.js';
+import { generateId, formatDate, formatTime, downloadCSV, joinStringList, normalizeStringList } from './utils.js';
 
 const SLEEP_KEY = 'sns_sleep_entries';
 const SCREEN_KEY = 'sns_screen_entries';
@@ -44,6 +44,7 @@ export const sleep = {
   save(entry) {
     const entries = readSleep();
     if (!entry.id) entry.id = generateId();
+    entry.targetBedtime = entry.targetBedtime || null;
     const idx = entries.findIndex(e => e.id === entry.id);
     if (idx >= 0) {
       entries[idx] = entry;
@@ -84,6 +85,7 @@ export const screen = {
   save(entry) {
     const entries = readScreen();
     if (!entry.id) entry.id = generateId();
+    entry.screenTypes = normalizeStringList(entry.screenTypes);
     const idx = entries.findIndex(e => e.id === entry.id);
     if (idx >= 0) {
       entries[idx] = entry;
@@ -126,12 +128,37 @@ function na(val) {
   return val !== null && val !== undefined ? val : 'N/A';
 }
 
+function csvCell(value) {
+  const stringValue = value !== null && value !== undefined ? String(value) : '';
+  return `"${stringValue.replace(/"/g, '""')}"`;
+}
+
+function csvRow(values) {
+  return values.map(csvCell).join(',');
+}
+
 export const csvExport = {
   sleep() {
     const entries = sleep.getAll().slice().sort((a, b) => a.date.localeCompare(b.date));
-    const header = 'Date,Sleep Start Time,Sleep End Time,Hours Slept,Sleep Quality,Productivity Rating,Day Difficulty,Day Speed,Alarm Time,Snooze Count,Time Felt Tired,Commute Home (min),Time Got Home\n';
-    const rows = entries.map(e => [
+    const header = csvRow([
+      'Date',
+      'Target Bedtime',
+      'Sleep Start Time',
+      'Sleep End Time',
+      'Hours Slept',
+      'Sleep Quality',
+      'Productivity Rating',
+      'Day Difficulty',
+      'Day Speed',
+      'Alarm Time',
+      'Snooze Count',
+      'Time Felt Tired',
+      'Commute Home (min)',
+      'Time Got Home'
+    ]) + '\n';
+    const rows = entries.map(e => csvRow([
       formatDate(e.date),
+      e.targetBedtime ? formatTime(e.targetBedtime) : 'N/A',
       formatTime(e.sleepStartTime),
       formatTime(e.sleepEndTime),
       e.hoursSlept.toFixed(1),
@@ -146,18 +173,19 @@ export const csvExport = {
         : 'N/A',
       e.commuteTimeHome !== null && e.commuteTimeHome !== undefined ? Math.round(e.commuteTimeHome) : 'N/A',
       e.timeGotHome ? formatTime(e.timeGotHome) : 'N/A'
-    ].join(','));
+    ]));
     downloadCSV('sleep_entries.csv', header + rows.join('\n'));
   },
 
   screen() {
     const entries = screen.getAll().slice().sort((a, b) => a.date.localeCompare(b.date));
-    const header = 'Date,Hours Used,Last Used Time\n';
-    const rows = entries.map(e => [
+    const header = csvRow(['Date', 'Hours Used', 'Last Used Time', 'Types']) + '\n';
+    const rows = entries.map(e => csvRow([
       formatDate(e.date),
       e.hoursUsed.toFixed(1),
-      formatTime(e.lastUsedTime)
-    ].join(','));
+      formatTime(e.lastUsedTime),
+      joinStringList(e.screenTypes, '; ') || 'N/A'
+    ]));
     downloadCSV('screen_entries.csv', header + rows.join('\n'));
   },
 
@@ -167,16 +195,26 @@ export const csvExport = {
     const map = {};
     for (const e of sleepEntries) { map[e.date] = map[e.date] || {}; map[e.date].sleep = e; }
     for (const e of screenEntries) { map[e.date] = map[e.date] || {}; map[e.date].screen = e; }
-    const header = 'Date,Sleep Hours,Sleep Quality,Productivity,Screen Hours\n';
+    const header = csvRow([
+      'Date',
+      'Target Bedtime',
+      'Sleep Hours',
+      'Sleep Quality',
+      'Productivity',
+      'Screen Hours',
+      'Screen Types'
+    ]) + '\n';
     const rows = Object.keys(map).sort().map(date => {
       const { sleep: s, screen: sc } = map[date];
-      return [
+      return csvRow([
         formatDate(date),
+        s?.targetBedtime ? formatTime(s.targetBedtime) : 'N/A',
         s ? s.hoursSlept.toFixed(1) : 'N/A',
         s ? s.sleepQuality : 'N/A',
         s ? s.productivityRating : 'N/A',
-        sc ? sc.hoursUsed.toFixed(1) : 'N/A'
-      ].join(',');
+        sc ? sc.hoursUsed.toFixed(1) : 'N/A',
+        sc ? joinStringList(sc.screenTypes, '; ') || 'N/A' : 'N/A'
+      ]);
     });
     downloadCSV('all_entries.csv', header + rows.join('\n'));
   }

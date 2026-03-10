@@ -1,7 +1,7 @@
 // sleep-chart.js — Sleep hours chart + quality/productivity chart
 
 import * as Store from '../store.js';
-import { formatDate, formatChartDate } from '../utils.js';
+import { formatDate, formatChartDate, formatTime, joinStringList } from '../utils.js';
 
 const CHART_DEFAULTS = {
   color: {
@@ -46,6 +46,11 @@ export function renderSleepCharts(container) {
               <div class="chart-detail-label">Hours Slept</div>
               <div class="chart-detail-value" style="color:#0A84FF">${entry.hoursSlept.toFixed(1)} hrs</div>
             </div>
+            ${entry.targetBedtime ? `
+            <div class="chart-detail-item">
+              <div class="chart-detail-label">Target Bedtime</div>
+              <div class="chart-detail-value">${formatTime(entry.targetBedtime)}</div>
+            </div>` : ''}
           </div>`;
       })
     });
@@ -151,6 +156,11 @@ export function renderScreenChart(container) {
               <div class="chart-detail-label">Last Used</div>
               <div class="chart-detail-value">${formatTime12(entry.lastUsedTime)}</div>
             </div>
+            ${joinStringList(entry.screenTypes) ? `
+            <div class="chart-detail-item">
+              <div class="chart-detail-label">Types</div>
+              <div class="chart-detail-value">${joinStringList(entry.screenTypes)}</div>
+            </div>` : ''}
           </div>`;
       })
     });
@@ -228,6 +238,16 @@ export function renderCombinedChart(container) {
                   <div class="chart-detail-label">Screen Hours</div>
                   <div class="chart-detail-value" style="color:#BF5AF2">${sc ? sc.hoursUsed.toFixed(1) + ' hrs' : 'No data'}</div>
                 </div>
+                ${s?.targetBedtime ? `
+                <div class="chart-detail-item">
+                  <div class="chart-detail-label">Target Bedtime</div>
+                  <div class="chart-detail-value">${formatTime(s.targetBedtime)}</div>
+                </div>` : ''}
+                ${joinStringList(sc?.screenTypes) ? `
+                <div class="chart-detail-item">
+                  <div class="chart-detail-label">Screen Types</div>
+                  <div class="chart-detail-value">${joinStringList(sc.screenTypes)}</div>
+                </div>` : ''}
               </div>`;
           }
         },
