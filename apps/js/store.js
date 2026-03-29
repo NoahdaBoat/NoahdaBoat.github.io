@@ -152,7 +152,6 @@ export const csvExport = {
       'Day Speed',
       'Alarm Time',
       'Snooze Count',
-      'Time Felt Tired',
       'Commute Home (min)',
       'Time Got Home'
     ]) + '\n';
@@ -168,9 +167,6 @@ export const csvExport = {
       na(e.dayFeltSpeed),
       e.alarmSetTime ? formatTime(e.alarmSetTime) : 'N/A',
       na(e.alarmSnoozeCount),
-      e.timeFeltTired
-        ? (Array.isArray(e.timeFeltTired) ? e.timeFeltTired.map(t => formatTime(t)).join('; ') : formatTime(e.timeFeltTired))
-        : 'N/A',
       e.commuteTimeHome !== null && e.commuteTimeHome !== undefined ? Math.round(e.commuteTimeHome) : 'N/A',
       e.timeGotHome ? formatTime(e.timeGotHome) : 'N/A'
     ]));

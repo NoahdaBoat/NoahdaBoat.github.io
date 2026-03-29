@@ -22,10 +22,6 @@ export function renderSleepForm({ id } = {}) {
     hasAlarm: existing?.alarmSetTime != null,
     alarmSetTime: existing?.alarmSetTime ?? '07:00',
     alarmSnoozeCount: existing?.alarmSnoozeCount ?? 0,
-    feltTired: existing?.timeFeltTired != null,
-    timeFeltTiredList: existing?.timeFeltTired
-      ? (Array.isArray(existing.timeFeltTired) ? existing.timeFeltTired : [existing.timeFeltTired])
-      : ['14:00'],
     hasCommuteTime: existing?.commuteTimeHome != null,
     commuteTimeHome: existing?.commuteTimeHome ?? 30,
     hasTimeGotHome: existing?.timeGotHome != null,
@@ -44,7 +40,7 @@ export function renderSleepForm({ id } = {}) {
       productivityRating: state.productivityRating,
       dayFeltDifficulty: state.dayFeltDifficulty,
       dayFeltSpeed: state.dayFeltSpeed,
-      timeFeltTired: state.feltTired ? state.timeFeltTiredList.filter(t => t) : null,
+      timeFeltTired: null,
       commuteTimeHome: state.hasCommuteTime ? state.commuteTimeHome : null,
       alarmSetTime: state.hasAlarm ? state.alarmSetTime : null,
       alarmSnoozeCount: state.hasAlarm ? state.alarmSnoozeCount : null,
@@ -148,64 +144,6 @@ export function renderSleepForm({ id } = {}) {
   const addCard = document.createElement('div');
   addCard.className = 'form-card';
 
-  const tiredDetails = document.createElement('div');
-  tiredDetails.classList.toggle('hidden', !state.feltTired);
-
-  function renderTiredInputs() {
-    tiredDetails.innerHTML = '';
-    state.timeFeltTiredList.forEach((time, idx) => {
-      const row = document.createElement('div');
-      row.className = 'form-row';
-
-      const lbl = document.createElement('span');
-      lbl.className = 'form-label';
-      lbl.textContent = state.timeFeltTiredList.length > 1 ? `Time #${idx + 1}` : 'Time Felt Tired';
-
-      const rightSide = document.createElement('div');
-      rightSide.style.display = 'flex';
-      rightSide.style.alignItems = 'center';
-      rightSide.style.gap = '8px';
-
-      const input = document.createElement('input');
-      input.type = 'time';
-      input.value = time;
-      input.className = 'form-input';
-      input.addEventListener('change', () => { state.timeFeltTiredList[idx] = input.value; });
-      rightSide.appendChild(input);
-
-      if (state.timeFeltTiredList.length > 1) {
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'tired-remove-btn';
-        removeBtn.textContent = '\u2212';
-        removeBtn.addEventListener('click', () => {
-          state.timeFeltTiredList.splice(idx, 1);
-          renderTiredInputs();
-        });
-        rightSide.appendChild(removeBtn);
-      }
-
-      row.appendChild(lbl);
-      row.appendChild(rightSide);
-      tiredDetails.appendChild(row);
-    });
-
-    const addRow = document.createElement('div');
-    addRow.className = 'form-row';
-    const addBtn = document.createElement('button');
-    addBtn.type = 'button';
-    addBtn.className = 'btn-text';
-    addBtn.textContent = '+ Add Another Time';
-    addBtn.addEventListener('click', () => {
-      state.timeFeltTiredList.push('14:00');
-      renderTiredInputs();
-    });
-    addRow.appendChild(addBtn);
-    tiredDetails.appendChild(addRow);
-  }
-
-  renderTiredInputs();
-
   const commuteDetails = document.createElement('div');
   commuteDetails.classList.toggle('hidden', !state.hasCommuteTime);
   commuteDetails.appendChild(stepperRow('Commute Home', state.commuteTimeHome, 0, 180, 5,
@@ -215,10 +153,6 @@ export function renderSleepForm({ id } = {}) {
   gotHomeDetails.classList.toggle('hidden', !state.hasTimeGotHome);
   gotHomeDetails.appendChild(formRow('Time Got Home', inputEl('time', state.timeGotHome, val => { state.timeGotHome = val; })));
 
-  addCard.appendChild(toggleRow('Did you feel tired today?', state.feltTired, val => {
-    state.feltTired = val; tiredDetails.classList.toggle('hidden', !val);
-  }));
-  addCard.appendChild(tiredDetails);
   addCard.appendChild(toggleRow('Log commute time?', state.hasCommuteTime, val => {
     state.hasCommuteTime = val; commuteDetails.classList.toggle('hidden', !val);
   }));

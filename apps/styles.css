@@ -622,25 +622,6 @@ html, body {
   color: white;
 }
 
-.tired-remove-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(255, 69, 58, 0.15);
-  color: var(--destructive);
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.tired-remove-btn:active {
-  background: rgba(255, 69, 58, 0.3);
-}
-
 .rating-hints {
   display: flex;
   justify-content: space-between;
