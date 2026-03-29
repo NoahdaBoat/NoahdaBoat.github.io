@@ -1,6 +1,6 @@
 // store.js — localStorage CRUD for sleep/screen entries + settings + CSV export
 
-import { generateId, formatDate, formatTime, downloadCSV, joinStringList, normalizeStringList } from './utils.js';
+import { generateId, formatDate, formatTime, downloadCSV } from './utils.js';
 
 const SLEEP_KEY = 'sns_sleep_entries';
 const SCREEN_KEY = 'sns_screen_entries';
@@ -85,7 +85,7 @@ export const screen = {
   save(entry) {
     const entries = readScreen();
     if (!entry.id) entry.id = generateId();
-    entry.screenTypes = normalizeStringList(entry.screenTypes);
+    entry.screenSatisfaction = entry.screenSatisfaction || null;
     const idx = entries.findIndex(e => e.id === entry.id);
     if (idx >= 0) {
       entries[idx] = entry;
@@ -179,12 +179,12 @@ export const csvExport = {
 
   screen() {
     const entries = screen.getAll().slice().sort((a, b) => a.date.localeCompare(b.date));
-    const header = csvRow(['Date', 'Hours Used', 'Last Used Time', 'Types']) + '\n';
+    const header = csvRow(['Date', 'Hours Used', 'Last Used Time', 'Satisfaction']) + '\n';
     const rows = entries.map(e => csvRow([
       formatDate(e.date),
       e.hoursUsed.toFixed(1),
       formatTime(e.lastUsedTime),
-      joinStringList(e.screenTypes, '; ') || 'N/A'
+      e.screenSatisfaction ? capitalize(e.screenSatisfaction) : 'N/A'
     ]));
     downloadCSV('screen_entries.csv', header + rows.join('\n'));
   },
@@ -202,7 +202,7 @@ export const csvExport = {
       'Sleep Quality',
       'Productivity',
       'Screen Hours',
-      'Screen Types'
+      'Screen Satisfaction'
     ]) + '\n';
     const rows = Object.keys(map).sort().map(date => {
       const { sleep: s, screen: sc } = map[date];
@@ -213,9 +213,13 @@ export const csvExport = {
         s ? s.sleepQuality : 'N/A',
         s ? s.productivityRating : 'N/A',
         sc ? sc.hoursUsed.toFixed(1) : 'N/A',
-        sc ? joinStringList(sc.screenTypes, '; ') || 'N/A' : 'N/A'
+        sc?.screenSatisfaction ? capitalize(sc.screenSatisfaction) : 'N/A'
       ]);
     });
     downloadCSV('all_entries.csv', header + rows.join('\n'));
   }
 };
+
+function capitalize(value) {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : '';
+}

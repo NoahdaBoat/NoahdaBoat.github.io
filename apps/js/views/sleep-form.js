@@ -11,7 +11,7 @@ export function renderSleepForm({ id } = {}) {
   // State — mirrors SleepLogView.swift init defaults
   const state = {
     date: existing?.date ?? today(),
-    targetBedtime: existing?.targetBedtime ?? '',
+    targetBedtime: existing ? (existing.targetBedtime ?? '') : '23:00',
     sleepStartTime: existing?.sleepStartTime ?? '23:00',
     sleepEndTime: existing?.sleepEndTime ?? '07:00',
     hoursSlept: existing?.hoursSlept ?? 8.0,

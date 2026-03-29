@@ -2,7 +2,7 @@
 
 import * as Store from '../store.js';
 import * as Router from '../router.js';
-import { today, clamp, generateId, normalizeStringList } from '../utils.js';
+import { today, clamp, generateId } from '../utils.js';
 
 export function renderScreenForm({ id } = {}) {
   const existing = id ? Store.screen.getById(id) : null;
@@ -11,9 +11,7 @@ export function renderScreenForm({ id } = {}) {
     date: existing?.date ?? today(),
     hoursUsed: existing?.hoursUsed ?? 3.0,
     lastUsedTime: existing?.lastUsedTime ?? '22:00',
-    screenTypes: normalizeStringList(existing?.screenTypes).length
-      ? normalizeStringList(existing?.screenTypes)
-      : [''],
+    screenSatisfaction: existing?.screenSatisfaction ?? null,
   };
 
   function save() {
@@ -22,7 +20,7 @@ export function renderScreenForm({ id } = {}) {
       date: state.date,
       hoursUsed: state.hoursUsed,
       lastUsedTime: state.lastUsedTime,
-      screenTypes: normalizeStringList(state.screenTypes),
+      screenSatisfaction: state.screenSatisfaction,
     };
     if (existing) entry.createdAt = existing.createdAt;
     Store.screen.save(entry);
@@ -98,69 +96,14 @@ export function renderScreenForm({ id } = {}) {
     input.addEventListener('change', () => { state.lastUsedTime = input.value; });
     return input;
   })()));
+  card.appendChild(choiceRow('Satisfaction', state.screenSatisfaction, [
+    { value: 'positive', label: 'Positive' },
+    { value: 'negative', label: 'Negative' },
+  ], value => {
+    state.screenSatisfaction = value;
+  }));
 
   container.appendChild(card);
-
-  container.appendChild(sectionTitle('Types'));
-  const typesCard = document.createElement('div');
-  typesCard.className = 'form-card';
-
-  function renderTypeInputs() {
-    typesCard.innerHTML = '';
-
-    state.screenTypes.forEach((type, idx) => {
-      const row = document.createElement('div');
-      row.className = 'form-row';
-
-      const lbl = document.createElement('span');
-      lbl.className = 'form-label';
-      lbl.textContent = state.screenTypes.length > 1 ? `Type #${idx + 1}` : 'Type';
-
-      const rightSide = document.createElement('div');
-      rightSide.className = 'form-inline-group';
-
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.value = type;
-      input.placeholder = idx === 0 ? 'Work' : 'Entertainment';
-      input.className = 'form-input form-input-wide';
-      input.addEventListener('input', () => { state.screenTypes[idx] = input.value; });
-      rightSide.appendChild(input);
-
-      if (state.screenTypes.length > 1) {
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'tired-remove-btn';
-        removeBtn.textContent = '−';
-        removeBtn.setAttribute('aria-label', `Remove type ${idx + 1}`);
-        removeBtn.addEventListener('click', () => {
-          state.screenTypes.splice(idx, 1);
-          renderTypeInputs();
-        });
-        rightSide.appendChild(removeBtn);
-      }
-
-      row.appendChild(lbl);
-      row.appendChild(rightSide);
-      typesCard.appendChild(row);
-    });
-
-    const addRow = document.createElement('div');
-    addRow.className = 'form-row';
-    const addBtn = document.createElement('button');
-    addBtn.type = 'button';
-    addBtn.className = 'btn-text';
-    addBtn.textContent = '+ Add Another Type';
-    addBtn.addEventListener('click', () => {
-      state.screenTypes.push('');
-      renderTypeInputs();
-    });
-    addRow.appendChild(addBtn);
-    typesCard.appendChild(addRow);
-  }
-
-  renderTypeInputs();
-  container.appendChild(typesCard);
 
   const spacer = document.createElement('div');
   spacer.style.height = '32px';
@@ -237,6 +180,45 @@ function stepperRow(label, initialValue, min, max, step, onChange, formatVal) {
   stepper.appendChild(plusBtn);
   row.appendChild(lbl);
   row.appendChild(stepper);
+  return row;
+}
+
+function choiceRow(label, selectedValue, options, onChange) {
+  let currentValue = selectedValue;
+  const row = document.createElement('div');
+  row.className = 'form-row';
+
+  const lbl = document.createElement('span');
+  lbl.className = 'form-label';
+  lbl.textContent = label;
+
+  const picker = document.createElement('div');
+  picker.className = 'choice-picker';
+
+  function update(newValue) {
+    currentValue = newValue;
+    picker.querySelectorAll('.choice-btn').forEach(btn => {
+      const isSelected = btn.dataset.value === currentValue;
+      btn.classList.toggle('selected', isSelected);
+      btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+    });
+    onChange(currentValue);
+  }
+
+  options.forEach(option => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `choice-btn ${option.value}`;
+    btn.dataset.value = option.value;
+    btn.textContent = option.label;
+    btn.addEventListener('click', () => update(option.value));
+    picker.appendChild(btn);
+  });
+
+  update(currentValue);
+
+  row.appendChild(lbl);
+  row.appendChild(picker);
   return row;
 }
 

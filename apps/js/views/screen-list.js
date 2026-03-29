@@ -2,7 +2,7 @@
 
 import * as Store from '../store.js';
 import * as Router from '../router.js';
-import { formatDate, formatTime, summarizeStringList } from '../utils.js';
+import { formatDate, formatTime } from '../utils.js';
 
 export function renderScreenList() {
   const container = document.createElement('div');
@@ -54,10 +54,9 @@ function createRow(entry) {
 
   const subtitle = document.createElement('div');
   subtitle.className = 'card-row-subtitle';
-  const typeSummary = summarizeStringList(entry.screenTypes);
   subtitle.textContent = [
     `${entry.hoursUsed.toFixed(1)} hrs`,
-    typeSummary || null,
+    entry.screenSatisfaction ? capitalize(entry.screenSatisfaction) : null,
     `Last used ${formatTime(entry.lastUsedTime)}`
   ].filter(Boolean).join(' · ');
 
@@ -98,4 +97,8 @@ function emptyState() {
     <div class="empty-state-message">Tap + to log your screen time.</div>
   `;
   return div;
+}
+
+function capitalize(value) {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : '';
 }

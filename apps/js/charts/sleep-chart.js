@@ -1,7 +1,7 @@
 // sleep-chart.js — Sleep hours chart + quality/productivity chart
 
 import * as Store from '../store.js';
-import { formatDate, formatChartDate, formatTime, joinStringList } from '../utils.js';
+import { formatDate, formatChartDate, formatTime } from '../utils.js';
 
 const CHART_DEFAULTS = {
   color: {
@@ -156,10 +156,10 @@ export function renderScreenChart(container) {
               <div class="chart-detail-label">Last Used</div>
               <div class="chart-detail-value">${formatTime12(entry.lastUsedTime)}</div>
             </div>
-            ${joinStringList(entry.screenTypes) ? `
+            ${entry.screenSatisfaction ? `
             <div class="chart-detail-item">
-              <div class="chart-detail-label">Types</div>
-              <div class="chart-detail-value">${joinStringList(entry.screenTypes)}</div>
+              <div class="chart-detail-label">Satisfaction</div>
+              <div class="chart-detail-value">${capitalize(entry.screenSatisfaction)}</div>
             </div>` : ''}
           </div>`;
       })
@@ -243,10 +243,10 @@ export function renderCombinedChart(container) {
                   <div class="chart-detail-label">Target Bedtime</div>
                   <div class="chart-detail-value">${formatTime(s.targetBedtime)}</div>
                 </div>` : ''}
-                ${joinStringList(sc?.screenTypes) ? `
+                ${sc?.screenSatisfaction ? `
                 <div class="chart-detail-item">
-                  <div class="chart-detail-label">Screen Types</div>
-                  <div class="chart-detail-value">${joinStringList(sc.screenTypes)}</div>
+                  <div class="chart-detail-label">Screen Satisfaction</div>
+                  <div class="chart-detail-value">${capitalize(sc.screenSatisfaction)}</div>
                 </div>` : ''}
               </div>`;
           }
@@ -353,4 +353,8 @@ function formatTime12(hhmm) {
   const [h, m] = hhmm.split(':').map(Number);
   const period = h >= 12 ? 'PM' : 'AM';
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+function capitalize(value) {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : '';
 }

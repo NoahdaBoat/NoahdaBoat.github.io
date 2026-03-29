@@ -414,32 +414,75 @@ html, body {
   color-scheme: dark;
 }
 
+.form-input[type="date"],
+.form-input[type="time"] {
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+}
+
 .form-input:focus {
   color: var(--accent);
 }
 
-.form-inline-group {
+.form-input[type="date"]:focus,
+.form-input[type="time"]:focus {
+  -webkit-text-fill-color: var(--accent);
+}
+
+.form-input::-webkit-date-and-time-value,
+.form-input::-webkit-datetime-edit-fields-wrapper,
+.form-input::-webkit-datetime-edit,
+.form-input::-webkit-datetime-edit-text,
+.form-input::-webkit-datetime-edit-hour-field,
+.form-input::-webkit-datetime-edit-minute-field,
+.form-input::-webkit-datetime-edit-day-field,
+.form-input::-webkit-datetime-edit-month-field,
+.form-input::-webkit-datetime-edit-year-field {
+  color: inherit;
+  -webkit-text-fill-color: inherit;
+  opacity: 1;
+  background: transparent;
+}
+
+.form-input:focus::-webkit-date-and-time-value,
+.form-input:focus::-webkit-datetime-edit-fields-wrapper,
+.form-input:focus::-webkit-datetime-edit,
+.form-input:focus::-webkit-datetime-edit-text,
+.form-input:focus::-webkit-datetime-edit-hour-field,
+.form-input:focus::-webkit-datetime-edit-minute-field,
+.form-input:focus::-webkit-datetime-edit-day-field,
+.form-input:focus::-webkit-datetime-edit-month-field,
+.form-input:focus::-webkit-datetime-edit-year-field {
+  color: inherit;
+  -webkit-text-fill-color: inherit;
+}
+
+.choice-picker {
   display: flex;
-  align-items: center;
   gap: 8px;
-  flex: 1;
-  min-width: 0;
-  justify-content: flex-end;
 }
 
-.form-input-wide {
-  flex: 1;
-  min-width: 120px;
-  max-width: none;
-  text-align: left;
-  color: var(--text);
+.choice-btn {
+  border: none;
+  border-radius: 999px;
   background: var(--secondary-bg);
-  border-radius: var(--border-radius-sm);
+  color: var(--secondary-text);
   padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
 }
 
-.form-input-wide::placeholder {
-  color: var(--secondary-text);
+.choice-btn.positive.selected {
+  background: rgba(48, 209, 88, 0.2);
+  color: var(--green);
+}
+
+.choice-btn.negative.selected {
+  background: rgba(255, 69, 58, 0.2);
+  color: var(--destructive);
 }
 
 /* Toggle switch */
