@@ -194,10 +194,19 @@ export const csvExport = {
     const header = csvRow([
       'Date',
       'Target Bedtime',
-      'Sleep Hours',
+      'Sleep Start Time',
+      'Sleep End Time',
+      'Hours Slept',
       'Sleep Quality',
-      'Productivity',
-      'Screen Hours',
+      'Productivity Rating',
+      'Day Difficulty',
+      'Day Speed',
+      'Alarm Time',
+      'Snooze Count',
+      'Commute Home (min)',
+      'Time Got Home',
+      'Hours Used',
+      'Last Used Time',
       'Screen Satisfaction'
     ]) + '\n';
     const rows = Object.keys(map).sort().map(date => {
@@ -205,10 +214,19 @@ export const csvExport = {
       return csvRow([
         formatDate(date),
         s?.targetBedtime ? formatTime(s.targetBedtime) : 'N/A',
+        s?.sleepStartTime ? formatTime(s.sleepStartTime) : 'N/A',
+        s?.sleepEndTime ? formatTime(s.sleepEndTime) : 'N/A',
         s ? s.hoursSlept.toFixed(1) : 'N/A',
         s ? s.sleepQuality : 'N/A',
         s ? s.productivityRating : 'N/A',
+        s ? na(s.dayFeltDifficulty) : 'N/A',
+        s ? na(s.dayFeltSpeed) : 'N/A',
+        s?.alarmSetTime ? formatTime(s.alarmSetTime) : 'N/A',
+        s ? na(s.alarmSnoozeCount) : 'N/A',
+        s && s.commuteTimeHome !== null && s.commuteTimeHome !== undefined ? Math.round(s.commuteTimeHome) : 'N/A',
+        s?.timeGotHome ? formatTime(s.timeGotHome) : 'N/A',
         sc ? sc.hoursUsed.toFixed(1) : 'N/A',
+        sc?.lastUsedTime ? formatTime(sc.lastUsedTime) : 'N/A',
         sc?.screenSatisfaction ? capitalize(sc.screenSatisfaction) : 'N/A'
       ]);
     });
