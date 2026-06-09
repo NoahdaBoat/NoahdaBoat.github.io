@@ -22,13 +22,6 @@
           <a class="page-link" href="{{ my_page.url | relative_url }}">{{ my_page.title | escape }}</a>
           {%- endif -%}
         {%- endfor -%}
-
-        <div class="nav-dropdown">
-          <span class="page-link nav-dropdown__toggle">Apps ▾</span>
-          <ul class="nav-dropdown__menu">
-            <li><a class="nav-dropdown__item" href="{{ "/apps/" | relative_url }}">Sleep &amp; Screens</a></li>
-          </ul>
-        </div>
       </div>
     </nav>
   </div>
